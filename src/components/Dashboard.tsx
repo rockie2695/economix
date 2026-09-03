@@ -23,7 +23,9 @@ import { DatePickerRange } from "./DatePickerRange";
 import { ValueModeSelector } from "./ValueModeSelector";
 import { DataChart } from "./DataChart";
 import { StatsCards } from "./StatsCards";
+import { LanguageSwitcher } from "./LanguageSwitcher";
 import { indicators } from "@/lib/indicators";
+import { useLocale } from "@/lib/LocaleContext";
 import type {
   TimeSeriesData,
   ChartDataPoint,
@@ -64,7 +66,7 @@ const CHART_COLORS = [
  * @param mode - How to transform the values
  * @returns Sorted array of ChartDataPoint for Recharts
  */
-function processDataForChart(
+export function processDataForChart(
   allData: TimeSeriesData[],
   mode: ValueMode
 ): ChartDataPoint[] {
@@ -127,7 +129,7 @@ function processDataForChart(
  * @param allData - Array of TimeSeriesData
  * @returns Array of StatsData, one per indicator
  */
-function calculateStats(allData: TimeSeriesData[]): StatsData[] {
+export function calculateStats(allData: TimeSeriesData[]): StatsData[] {
   return allData.map((series) => {
     const values = series.data.map((d) => d.value);
     const currentValue = values[values.length - 1] || 0;
@@ -167,6 +169,7 @@ function calculateStats(allData: TimeSeriesData[]): StatsData[] {
  * using React.useCallback to memoize the fetch function.
  */
 export function Dashboard() {
+  const { t } = useLocale();
   const [selectedIds, setSelectedIds] = React.useState<string[]>([]);
   const [valueMode, setValueMode] = React.useState<ValueMode>("value");
   const [dateRange, setDateRange] = React.useState<DateRange>({
@@ -270,13 +273,16 @@ export function Dashboard() {
       <header className="border-b">
         <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold">Economix</h1>
+            <h1 className="text-2xl font-bold">{t("appTitle")}</h1>
             <p className="text-sm text-muted-foreground">
-              Economic Data Dashboard
+              {t("appSubtitle")}
             </p>
           </div>
-          <div className="text-sm text-muted-foreground">
-            Data from FRED & DBnomics
+          <div className="flex items-center gap-3">
+            <span className="text-sm text-muted-foreground">
+              {t("dataSource")}
+            </span>
+            <LanguageSwitcher />
           </div>
         </div>
       </header>

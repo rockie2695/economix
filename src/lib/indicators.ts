@@ -1,32 +1,17 @@
-/**
- * indicators.ts — Indicator definitions for the Economix dashboard.
- *
- * This file is the single source of truth for all available data indicators.
- * To add a new indicator, simply add an entry to the `indicators` array.
- * No other code changes are needed — the dashboard auto-discovers indicators.
- *
- * Each indicator maps to either:
- * - A FRED series (requires series_id + API key)
- * - A DBnomics dataset (requires dataset_code + provider_code, no key needed)
- *
- * @see types/index.ts for the Indicator interface
- * @see README.md for the full list of indicators
- */
-
 import type { Indicator } from "@/types";
 
 export const indicators: Indicator[] = [
-  // ─── FRED Indicators ──────────────────────────────────────────────────────
-  // These require a FRED API key in .env.local
-
+  // ─── United States ─────────────────────────────────────────────────────────
   {
     id: "gdp",
     name: "GDP",
     source: "fred",
     seriesId: "GDP",
     unit: "Billions of Dollars",
-    category: "National Accounts",
+    category: "nationalAccounts",
     description: "Gross Domestic Product",
+    categoryType: "country",
+    country: "US",
   },
   {
     id: "unemployment",
@@ -34,8 +19,10 @@ export const indicators: Indicator[] = [
     source: "fred",
     seriesId: "UNRATE",
     unit: "Percent",
-    category: "Labor",
+    category: "labor",
     description: "Civilian Unemployment Rate",
+    categoryType: "country",
+    country: "US",
   },
   {
     id: "cpi",
@@ -43,8 +30,10 @@ export const indicators: Indicator[] = [
     source: "fred",
     seriesId: "CPIAUCSL",
     unit: "Index 1982-1984=100",
-    category: "Prices",
+    category: "prices",
     description: "Consumer Price Index for All Urban Consumers",
+    categoryType: "country",
+    country: "US",
   },
   {
     id: "fed_funds_rate",
@@ -52,8 +41,10 @@ export const indicators: Indicator[] = [
     source: "fred",
     seriesId: "FEDFUNDS",
     unit: "Percent",
-    category: "Interest Rates",
+    category: "interestRates",
     description: "Federal Funds Effective Rate",
+    categoryType: "country",
+    country: "US",
   },
   {
     id: "treasury_10y",
@@ -61,8 +52,11 @@ export const indicators: Indicator[] = [
     source: "fred",
     seriesId: "DGS10",
     unit: "Percent",
-    category: "Interest Rates",
-    description: "Market Yield on U.S. Treasury Securities at 10-Year Constant Maturity",
+    category: "interestRates",
+    description:
+      "Market Yield on U.S. Treasury Securities at 10-Year Constant Maturity",
+    categoryType: "country",
+    country: "US",
   },
   {
     id: "sp500",
@@ -70,8 +64,10 @@ export const indicators: Indicator[] = [
     source: "fred",
     seriesId: "SP500",
     unit: "Index",
-    category: "Stock Market",
+    category: "stockMarket",
     description: "S&P 500 Index",
+    categoryType: "country",
+    country: "US",
   },
   {
     id: "industrial_production",
@@ -79,8 +75,10 @@ export const indicators: Indicator[] = [
     source: "fred",
     seriesId: "INDPRO",
     unit: "Index 2017=100",
-    category: "Production",
+    category: "production",
     description: "Industrial Production: Total Index",
+    categoryType: "country",
+    country: "US",
   },
   {
     id: "housing_starts",
@@ -88,8 +86,10 @@ export const indicators: Indicator[] = [
     source: "fred",
     seriesId: "HOUST",
     unit: "Thousands of Units",
-    category: "Housing",
+    category: "housing",
     description: "New Privately-Owned Housing Units Started",
+    categoryType: "country",
+    country: "US",
   },
   {
     id: "consumer_sentiment",
@@ -97,8 +97,10 @@ export const indicators: Indicator[] = [
     source: "fred",
     seriesId: "UMCSENT",
     unit: "Index 1966Q1=100",
-    category: "Sentiment",
+    category: "sentiment",
     description: "University of Michigan: Consumer Sentiment",
+    categoryType: "country",
+    country: "US",
   },
   {
     id: "pce",
@@ -106,13 +108,214 @@ export const indicators: Indicator[] = [
     source: "fred",
     seriesId: "PCE",
     unit: "Billions of Dollars",
-    category: "National Accounts",
+    category: "nationalAccounts",
     description: "Personal Consumption Expenditures",
+    categoryType: "country",
+    country: "US",
+  },
+  {
+    id: "trade_balance",
+    name: "Trade Balance",
+    source: "fred",
+    seriesId: "BOPGSTB",
+    unit: "Millions of Dollars",
+    category: "trade",
+    description:
+      "Trade Balance: Goods and Services, Balance of Payments Basis",
+    categoryType: "country",
+    country: "US",
+  },
+  {
+    id: "retail_sales",
+    name: "Retail Sales",
+    source: "fred",
+    seriesId: "RSAFS",
+    unit: "Millions of Dollars",
+    category: "consumption",
+    description: "Advance Retail Sales: Retail Trade",
+    categoryType: "country",
+    country: "US",
   },
 
-  // ─── DBnomics Indicators ──────────────────────────────────────────────────
-  // These are free and do not require an API key
+  // ─── Euro Area ─────────────────────────────────────────────────────────────
+  {
+    id: "eu_gdp",
+    name: "GDP",
+    source: "fred",
+    seriesId: "CLVMNACSCAB1GQEA19",
+    unit: "Millions of Chained 2010 Euros",
+    category: "nationalAccounts",
+    description: "Real Gross Domestic Product for Euro Area (19 Countries)",
+    categoryType: "country",
+    country: "EuroArea",
+  },
+  {
+    id: "eu_unemployment",
+    name: "Unemployment Rate",
+    source: "fred",
+    seriesId: "LRHUTTTTEZM156S",
+    unit: "Percent",
+    category: "labor",
+    description:
+      "Harmonised Unemployment Rate: Total: All Persons for Euro Area",
+    categoryType: "country",
+    country: "EuroArea",
+  },
+  {
+    id: "eu_hicp",
+    name: "HICP",
+    source: "fred",
+    seriesId: "CP0000EZ19M086NEST",
+    unit: "Index 2025=100",
+    category: "prices",
+    description:
+      "Harmonized Index of Consumer Prices: Total for Euro Area (19 Countries)",
+    categoryType: "country",
+    country: "EuroArea",
+  },
+  {
+    id: "eu_ecb_rate",
+    name: "ECB Main Refinancing Rate",
+    source: "fred",
+    seriesId: "ECBMRRFR",
+    unit: "Percent",
+    category: "interestRates",
+    description:
+      "ECB Main Refinancing Operations Rate: Fixed Rate Tenders for Euro Area",
+    categoryType: "country",
+    country: "EuroArea",
+  },
 
+  // ─── Japan ─────────────────────────────────────────────────────────────────
+  {
+    id: "jp_gdp",
+    name: "GDP",
+    source: "fred",
+    seriesId: "JPNRGDPEXP",
+    unit: "Billions of Chained 2015 Yen",
+    category: "nationalAccounts",
+    description: "Real Gross Domestic Product for Japan",
+    categoryType: "country",
+    country: "Japan",
+  },
+  {
+    id: "jp_unemployment",
+    name: "Unemployment Rate",
+    source: "fred",
+    seriesId: "LRHUTTTTJPM156S",
+    unit: "Percent",
+    category: "labor",
+    description:
+      "Infra-Annual Labor Statistics: Monthly Unemployment Rate Total for Japan",
+    categoryType: "country",
+    country: "Japan",
+  },
+  {
+    id: "jp_cpi",
+    name: "CPI",
+    source: "fred",
+    seriesId: "CPALTT01JPM659N",
+    unit: "Index 2015=100",
+    category: "prices",
+    description: "Consumer Price Indices: Total for Japan",
+    categoryType: "country",
+    country: "Japan",
+  },
+  {
+    id: "jp_boj_rate",
+    name: "BOJ Policy Rate",
+    source: "fred",
+    seriesId: "IRSTCI01JPM156N",
+    unit: "Percent",
+    category: "interestRates",
+    description: "Call Money/Interbank Rate for Japan",
+    categoryType: "country",
+    country: "Japan",
+  },
+
+  // ─── China ─────────────────────────────────────────────────────────────────
+  {
+    id: "cn_gdp",
+    name: "GDP",
+    source: "fred",
+    seriesId: "MKTGDPCNA646NWDB",
+    unit: "Current US Dollars",
+    category: "nationalAccounts",
+    description: "Gross Domestic Product for China",
+    categoryType: "country",
+    country: "China",
+  },
+  {
+    id: "cn_cpi",
+    name: "CPI",
+    source: "fred",
+    seriesId: "CPALTT01CNM659N",
+    unit: "Index 2015=100",
+    category: "prices",
+    description: "Consumer Price Indices: Total for China",
+    categoryType: "country",
+    country: "China",
+  },
+  {
+    id: "cn_interest_rate",
+    name: "Interest Rate",
+    source: "fred",
+    seriesId: "INTDSRCNM193N",
+    unit: "Percent per Annum",
+    category: "interestRates",
+    description: "Interest Rates, Discount Rate for China",
+    categoryType: "country",
+    country: "China",
+  },
+
+  // ─── United Kingdom ────────────────────────────────────────────────────────
+  {
+    id: "uk_gdp",
+    name: "GDP",
+    source: "fred",
+    seriesId: "UKNGDP",
+    unit: "Millions of Pounds",
+    category: "nationalAccounts",
+    description: "Gross Domestic Product for United Kingdom",
+    categoryType: "country",
+    country: "UK",
+  },
+  {
+    id: "uk_unemployment",
+    name: "Unemployment Rate",
+    source: "fred",
+    seriesId: "LRHUTTTTGBM156S",
+    unit: "Percent",
+    category: "labor",
+    description:
+      "Infra-Annual Labor Statistics: Monthly Unemployment Rate Total for United Kingdom",
+    categoryType: "country",
+    country: "UK",
+  },
+  {
+    id: "uk_cpi",
+    name: "CPI",
+    source: "fred",
+    seriesId: "GBRCPIALLMINMEI",
+    unit: "Index 2015=100",
+    category: "prices",
+    description: "Consumer Price Indices: CPI Total for United Kingdom",
+    categoryType: "country",
+    country: "UK",
+  },
+  {
+    id: "uk_boe_rate",
+    name: "BOE Bank Rate",
+    source: "fred",
+    seriesId: "BOERUKM",
+    unit: "Percent per Annum",
+    category: "interestRates",
+    description: "Bank of England Policy Rate",
+    categoryType: "country",
+    country: "UK",
+  },
+
+  // ─── Global / Commodities ──────────────────────────────────────────────────
   {
     id: "oil_wti",
     name: "WTI Crude Oil",
@@ -120,8 +323,9 @@ export const indicators: Indicator[] = [
     datasetCode: "WFIVERDB-5",
     providerCode: "FRED",
     unit: "Dollars per Barrel",
-    category: "Commodities",
+    category: "commodities",
     description: "Crude Oil WTI - Daily",
+    categoryType: "global",
   },
   {
     id: "gold_price",
@@ -130,8 +334,9 @@ export const indicators: Indicator[] = [
     datasetCode: "GFDEGDQ188S",
     providerCode: "FRED",
     unit: "US Dollars",
-    category: "Commodities",
+    category: "commodities",
     description: "Gold Price",
+    categoryType: "global",
   },
   {
     id: "sugar_global",
@@ -140,8 +345,9 @@ export const indicators: Indicator[] = [
     datasetCode: "PSUGA_USD",
     providerCode: "IMF",
     unit: "USD per pound",
-    category: "Commodities",
+    category: "commodities",
     description: "Sugar, Global Price",
+    categoryType: "global",
   },
   {
     id: "natural_gas",
@@ -150,31 +356,8 @@ export const indicators: Indicator[] = [
     datasetCode: "DHHNGSP",
     providerCode: "FRED",
     unit: "Dollars per Million BTU",
-    category: "Commodities",
+    category: "commodities",
     description: "Henry Hub Natural Gas Spot Price",
-  },
-  {
-    id: "trade_balance",
-    name: "Trade Balance",
-    source: "fred",
-    seriesId: "BOPGSTB",
-    unit: "Millions of Dollars",
-    category: "Trade",
-    description: "Trade Balance: Goods and Services, Balance of Payments Basis",
-  },
-  {
-    id: "retail_sales",
-    name: "Retail Sales",
-    source: "fred",
-    seriesId: "RSAFS",
-    unit: "Millions of Dollars",
-    category: "Consumption",
-    description: "Advance Retail Sales: Retail Trade",
+    categoryType: "global",
   },
 ];
-
-/**
- * Unique categories derived from indicators.
- * Used for potential category filtering in the UI.
- */
-export const categories = [...new Set(indicators.map((i) => i.category))];

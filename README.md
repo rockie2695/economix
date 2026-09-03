@@ -1,6 +1,6 @@
 # Economix — Economic Data Dashboard
 
-A modern, dark-themed dashboard for visualizing macroeconomic data from **FRED** and **DBnomics** APIs. Built with Next.js App Router, TypeScript, Tailwind CSS, and Recharts.
+A modern, dark-themed dashboard for visualizing macroeconomic data from **FRED** and **DBnomics** APIs. Built with Next.js App Router, TypeScript, Tailwind CSS, and Recharts. Supports **繁中/English** language switching.
 
 ---
 
@@ -16,7 +16,9 @@ A modern, dark-themed dashboard for visualizing macroeconomic data from **FRED**
 - [Architecture](#architecture)
 - [API Routes](#api-routes)
 - [Components](#components)
+- [Internationalization](#internationalization)
 - [Adding New Indicators](#adding-new-indicators)
+- [Testing](#testing)
 - [Deployment](#deployment)
 
 ---
@@ -43,11 +45,14 @@ open http://localhost:3000
 ## Features
 
 - **Multi-indicator comparison** — Select one or more indicators to overlay on the same chart
+- **5 countries + global commodities** — US, Euro Area, Japan, China, UK + WTI Oil, Gold, Sugar, Natural Gas
+- **Country-specific grouping** — Indicators organized by country and global commodities
 - **Searchable indicator picker** — Filter by name, category, or description
 - **Date range control** — Custom date pickers + quick presets (1Y, 5Y, 10Y, All)
 - **4 display modes** — Raw value, value change, percentage, percentage change
 - **Interactive tooltips** — Hover over chart lines to see exact values
 - **Stats cards** — Current value, change %, and trend arrows at a glance
+- **i18n support** — Switch between 繁中 and English with one click
 - **Dark theme** — Easy on the eyes for extended analysis sessions
 - **Responsive** — Works on desktop and tablet
 
@@ -62,6 +67,8 @@ open http://localhost:3000
 | UI | Tailwind CSS 4 + shadcn/ui (Base UI) |
 | Charts | Recharts 3 |
 | Icons | Lucide React |
+| i18n | React Context + localStorage |
+| Testing | Vitest |
 | Data Sources | FRED API, DBnomics API |
 
 ---
@@ -85,12 +92,22 @@ economix/
 │   │   ├── ValueModeSelector.tsx     # Value/Change/%/% Change toggle
 │   │   ├── DataChart.tsx             # Recharts LineChart wrapper
 │   │   ├── StatsCards.tsx            # Stats display cards
+│   │   ├── LanguageSwitcher.tsx      # 繁中/EN toggle button
+│   │   ├── Providers.tsx             # Client-side context providers
 │   │   └── ui/                       # shadcn/ui primitives
 │   ├── lib/
-│   │   ├── indicators.ts             # Indicator definitions (16 indicators)
+│   │   ├── indicators.ts             # Indicator definitions (29 indicators)
+│   │   ├── i18n.ts                   # Translation dictionaries (en/zh-TW)
+│   │   ├── LocaleContext.tsx          # React Context for locale state
 │   │   └── utils.ts                  # cn() helper
-│   └── types/
-│       └── index.ts                  # TypeScript interfaces
+│   ├── types/
+│   │   └── index.ts                  # TypeScript interfaces
+│   └── __tests__/
+│       ├── i18n.test.ts              # Translation key parity tests
+│       ├── indicators.test.ts        # Indicator structure validation
+│       ├── chart-data.test.ts        # processDataForChart unit tests
+│       └── stats.test.ts             # calculateStats unit tests
+├── vitest.config.ts                  # Vitest configuration
 ├── .env.local                        # API keys (git-ignored)
 └── package.json
 ```
@@ -127,7 +144,7 @@ FRED_API_KEY=your_api_key_here
 
 ## Available Indicators
 
-### FRED Indicators (require API key)
+### United States (FRED)
 
 | ID | Name | Series ID | Unit | Category |
 |----|------|-----------|------|----------|
@@ -144,7 +161,42 @@ FRED_API_KEY=your_api_key_here
 | `trade_balance` | Trade Balance | BOPGSTB | Millions of $ | Trade |
 | `retail_sales` | Retail Sales | RSAFS | Millions of $ | Consumption |
 
-### DBnomics Indicators (free, no key)
+### Euro Area (FRED)
+
+| ID | Name | Series ID | Unit | Category |
+|----|------|-----------|------|----------|
+| `eu_gdp` | GDP | CLVMNACSCAB1GQEA19 | Millions of Chained 2010 Euros | National Accounts |
+| `eu_unemployment` | Unemployment Rate | LRHUTTTTEZM156S | % | Labor |
+| `eu_hicp` | HICP | CP0000EZ19M086NEST | Index 2025=100 | Prices |
+| `eu_ecb_rate` | ECB Main Refinancing Rate | ECBMRRFR | % | Interest Rates |
+
+### Japan (FRED)
+
+| ID | Name | Series ID | Unit | Category |
+|----|------|-----------|------|----------|
+| `jp_gdp` | GDP | JPNRGDPEXP | Billions of Chained 2015 Yen | National Accounts |
+| `jp_unemployment` | Unemployment Rate | LRHUTTTTJPM156S | % | Labor |
+| `jp_cpi` | CPI | CPALTT01JPM659N | Index 2015=100 | Prices |
+| `jp_boj_rate` | BOJ Policy Rate | IRSTCI01JPM156N | % | Interest Rates |
+
+### China (FRED)
+
+| ID | Name | Series ID | Unit | Category |
+|----|------|-----------|------|----------|
+| `cn_gdp` | GDP | MKTGDPCNA646NWDB | Current US Dollars | National Accounts |
+| `cn_cpi` | CPI | CPALTT01CNM659N | Index 2015=100 | Prices |
+| `cn_interest_rate` | Interest Rate | INTDSRCNM193N | % per Annum | Interest Rates |
+
+### United Kingdom (FRED)
+
+| ID | Name | Series ID | Unit | Category |
+|----|------|-----------|------|----------|
+| `uk_gdp` | GDP | UKNGDP | Millions of Pounds | National Accounts |
+| `uk_unemployment` | Unemployment Rate | LRHUTTTTGBM156S | % | Labor |
+| `uk_cpi` | CPI | GBRCPIALLMINMEI | Index 2015=100 | Prices |
+| `uk_boe_rate` | BOE Bank Rate | BOERUKM | % per Annum | Interest Rates |
+
+### Global / Commodities (DBnomics)
 
 | ID | Name | Dataset | Provider | Unit | Category |
 |----|------|---------|----------|------|----------|
@@ -278,13 +330,16 @@ The main orchestrator. Manages all state:
 - `isLoading: boolean` — Loading state
 - `error: string | null` — Error message
 
+Exports `processDataForChart()` and `calculateStats()` for testing.
+
 ### `IndicatorSelector.tsx`
 
-A popover with a searchable list of indicators. Supports:
+A popover with a searchable list of indicators grouped by country and global commodities. Supports:
 - Multi-select with badge chips
 - Click badges to remove
 - Search by name, category, or description
 - Shows source (FRED/DBN) and category for each indicator
+- Grouped layout: Country-specific → country → indicators, Global → commodities
 
 ### `DatePickerRange.tsx`
 
@@ -318,6 +373,37 @@ A grid of stat cards showing for each indicator:
 - Change % from previous period
 - Trend arrow (up/down/neutral)
 
+### `LanguageSwitcher.tsx`
+
+A toggle button in the header that switches between 繁中 and English. Locale is persisted to localStorage.
+
+---
+
+## Internationalization
+
+The app supports two locales:
+- **English** (`en`) — default
+- **繁體中文** (`zh-TW`)
+
+### How it works
+
+- `src/lib/i18n.ts` — Translation dictionary with ~40 keys
+- `src/lib/LocaleContext.tsx` — React Context providing `locale`, `t()`, `setLocale()`
+- `src/components/LanguageSwitcher.tsx` — Toggle button in header
+- Locale is persisted to `localStorage("economix-locale")`
+
+### Adding a new locale
+
+1. Add locale type to `Locale` in `src/lib/i18n.ts`
+2. Add translation entries for all keys in `translations`
+3. Update `LocaleContext.tsx` to accept the new locale in `getInitialLocale()`
+
+### Adding a new translation key
+
+1. Add the key to `TranslationKey` type in `src/lib/i18n.ts`
+2. Add translations for all locales in the `translations` object
+3. Use `t("yourKey")` in components via `useLocale()`
+
 ---
 
 ## Adding New Indicators
@@ -334,8 +420,10 @@ A grid of stat cards showing for each indicator:
   source: "fred",
   seriesId: "SERIES_ID",
   unit: "Units",
-  category: "Category",
+  category: "nationalAccounts",
   description: "Description text",
+  categoryType: "country",
+  country: "US",  // or "EuroArea", "Japan", "China", "UK"
 }
 ```
 
@@ -352,12 +440,36 @@ A grid of stat cards showing for each indicator:
   datasetCode: "DATASET_CODE",
   providerCode: "PROVIDER",
   unit: "Units",
-  category: "Category",
+  category: "commodities",
   description: "Description text",
+  categoryType: "global",
 }
 ```
 
 No other code changes needed — the dashboard auto-discovers indicators from the array.
+
+---
+
+## Testing
+
+Tests use [Vitest](https://vitest.dev/) and cover core logic:
+
+```bash
+# Run all tests
+npm test
+
+# Run tests in watch mode
+npx vitest
+```
+
+### Test files
+
+| File | Coverage |
+|------|----------|
+| `src/__tests__/i18n.test.ts` | Translation key parity, `t()` correctness |
+| `src/__tests__/indicators.test.ts` | Indicator structure, required fields, unique IDs |
+| `src/__tests__/chart-data.test.ts` | `processDataForChart()` — merge, sort, value modes |
+| `src/__tests__/stats.test.ts` | `calculateStats()` — change, percentages, min/max |
 
 ---
 

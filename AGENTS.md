@@ -12,7 +12,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 ## Project Overview
 
-Economix is a macroeconomic data visualization dashboard. It fetches data from FRED and DBnomics APIs, displays time-series charts, and computes basic statistics.
+Economix is a macroeconomic data visualization dashboard. It fetches data from FRED and DBnomics APIs, displays time-series charts, and computes basic statistics. Supports 繁中/English language switching.
 
 **Stack**: Next.js 16 (App Router), TypeScript, Tailwind CSS 4, shadcn/ui (Base UI), Recharts 3
 
@@ -29,17 +29,26 @@ src/
 │   └── globals.css               # Tailwind imports + shadcn CSS variables
 ├── components/
 │   ├── Dashboard.tsx             # Main orchestrator (state, fetch, layout)
-│   ├── IndicatorSelector.tsx     # Searchable multi-select popover
+│   ├── IndicatorSelector.tsx     # Searchable multi-select popover (grouped)
 │   ├── DatePickerRange.tsx       # Date range inputs + quick presets
 │   ├── ValueModeSelector.tsx     # Segmented control (4 modes)
 │   ├── DataChart.tsx             # Recharts LineChart wrapper
 │   ├── StatsCards.tsx            # Stats cards grid
+│   ├── LanguageSwitcher.tsx      # 繁中/EN toggle button
+│   ├── Providers.tsx             # Client-side context providers wrapper
 │   └── ui/                       # shadcn/ui primitives (button, card, etc.)
 ├── lib/
-│   ├── indicators.ts             # Indicator definitions array
+│   ├── indicators.ts             # Indicator definitions array (29 indicators)
+│   ├── i18n.ts                   # Translation dictionaries (en/zh-TW)
+│   ├── LocaleContext.tsx          # React Context for locale state
 │   └── utils.ts                  # cn() merge helper
-└── types/
-    └── index.ts                  # All TypeScript interfaces
+├── types/
+│   └── index.ts                  # All TypeScript interfaces
+└── __tests__/
+    ├── i18n.test.ts              # Translation key parity tests
+    ├── indicators.test.ts        # Indicator structure validation
+    ├── chart-data.test.ts        # processDataForChart unit tests
+    └── stats.test.ts             # calculateStats unit tests
 ```
 
 ## Key Data Types
@@ -54,8 +63,10 @@ interface Indicator {
   datasetCode?: string;    // DBnomics dataset code
   providerCode?: string;   // DBnomics provider code
   unit?: string;           // display unit, e.g. "Billions of Dollars"
-  category: string;        // grouping, e.g. "National Accounts"
+  category: string;        // category key (i18n), e.g. "nationalAccounts"
   description?: string;    // human-readable description
+  categoryType: "country" | "global";  // country-specific vs global data
+  country?: string;        // "US", "EuroArea", "Japan", "China", "UK" — undefined for global
 }
 
 // Raw data point from API
@@ -134,6 +145,32 @@ const CHART_COLORS = ["#3b82f6", "#ef4444", "#10b981", ...];
 // Color = CHART_COLORS[selectionIndex % CHART_COLORS.length]
 ```
 
+### Internationalization (i18n)
+
+Locale is managed via React Context:
+```typescript
+const { locale, setLocale, t } = useLocale();
+// locale: "en" | "zh-TW"
+// setLocale("zh-TW") — switches language, persists to localStorage
+// t("appTitle") → "Economix" or "經濟指標"
+```
+
+Translation keys defined in `src/lib/i18n.ts`. Categories and countries use i18n keys (e.g., `t(indicator.category)`, `t("country_US")`).
+
+### Indicator Grouping
+
+Indicators are grouped by `categoryType` → `country` (or `category` for global):
+```
+Country-specific
+  US → GDP, Unemployment, CPI, ...
+  Euro Area → GDP, HICP, ECB Rate, ...
+  Japan → GDP, CPI, BOJ Rate, ...
+  China → GDP, CPI, Interest Rate, ...
+  UK → GDP, CPI, BOE Rate, ...
+Global
+  Commodities → WTI Oil, Gold, Sugar, Natural Gas
+```
+
 ### API Key Security
 
 FRED API key is stored in `.env.local` (git-ignored) and accessed via `process.env.FRED_API_KEY` in server-side API routes only. Never exposed to the client bundle.
@@ -150,8 +187,10 @@ Edit `src/lib/indicators.ts`, add to the `indicators` array:
   source: "fred",
   seriesId: "FRED_SERIES_ID",
   unit: "Units",
-  category: "Category",
+  category: "nationalAccounts",
   description: "Description",
+  categoryType: "country",
+  country: "US",
 }
 ```
 
@@ -166,10 +205,23 @@ Edit `src/lib/indicators.ts`:
   datasetCode: "DATASET_CODE",
   providerCode: "PROVIDER",
   unit: "Units",
-  category: "Category",
+  category: "commodities",
   description: "Description",
+  categoryType: "global",
 }
 ```
+
+### Add a new translation key
+
+1. Add key to `TranslationKey` in `src/lib/i18n.ts`
+2. Add translations in both `en` and `zh-TW` objects
+3. Use `t("key")` in components
+
+### Add a new locale
+
+1. Add locale to `Locale` type in `src/lib/i18n.ts`
+2. Add translation entries in `translations`
+3. Update `getInitialLocale()` in `LocaleContext.tsx`
 
 ### Change chart colors
 
@@ -177,11 +229,11 @@ Edit the `CHART_COLORS` array in `src/components/Dashboard.tsx` (line 19).
 
 ### Modify stats calculation
 
-Edit `calculateStats()` in `src/components/Dashboard.tsx` (line 82).
+Edit `calculateStats()` in `src/components/Dashboard.tsx` (line 132).
 
 ### Adjust date range defaults
 
-Edit the `dateRange` initial state in `Dashboard.tsx` (line 110).
+Edit the `dateRange` initial state in `Dashboard.tsx` (line 172).
 
 ## Tech Notes
 
@@ -207,6 +259,15 @@ const response = await fetch(`/api/fred?series_id=GDP&start_date=2020-01-01`);
 const data = await response.json();
 // data.observations = [{ date, value }, ...]
 ```
+
+### Testing
+
+```bash
+npm test           # Run all tests (Vitest)
+npx vitest         # Run tests in watch mode
+```
+
+Test files in `src/__tests__/` cover: i18n translations, indicator structure, `processDataForChart()`, `calculateStats()`.
 
 ## Environment Variables
 

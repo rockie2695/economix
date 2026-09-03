@@ -2,6 +2,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowUp, ArrowDown, Minus } from "lucide-react";
+import { useLocale } from "@/lib/LocaleContext";
 import type { StatsData } from "@/types";
 
 interface StatsCardsProps {
@@ -23,6 +24,8 @@ function formatNumber(value: number): string {
 }
 
 export function StatsCards({ stats, isLoading = false }: StatsCardsProps) {
+  const { t } = useLocale();
+
   if (isLoading) {
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -89,7 +92,7 @@ export function StatsCards({ stats, isLoading = false }: StatsCardsProps) {
                 }`}
               >
                 {isPositive ? "+" : ""}
-                {formatNumber(stat.change)} from previous
+                {formatNumber(stat.change)} {t("fromPrevious")}
               </p>
             </CardContent>
           </Card>

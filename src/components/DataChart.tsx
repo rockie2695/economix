@@ -12,6 +12,7 @@ import {
   Legend,
 } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useLocale } from "@/lib/LocaleContext";
 import type { ChartDataPoint, ValueMode } from "@/types";
 
 interface DataChartProps {
@@ -75,35 +76,46 @@ export function DataChart({
   data,
   indicators,
   valueMode,
-  title = "Time Series Data",
+  title,
 }: DataChartProps) {
+  const { t } = useLocale();
+  const displayTitle = title || t("timeSeriesData");
+
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{title}</CardTitle>
+        <CardTitle>{displayTitle}</CardTitle>
       </CardHeader>
       <CardContent>
         {data.length === 0 || indicators.length === 0 ? (
           <div className="h-[400px] flex items-center justify-center text-muted-foreground">
-            Select indicators to display data
+            {t("selectToDisplay")}
           </div>
         ) : (
           <ResponsiveContainer width="100%" height={400}>
-            <LineChart data={data} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+            <LineChart
+              data={data}
+              margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+            >
+              <CartesianGrid
+                strokeDasharray="3 3"
+                stroke="var(--border)"
+              />
               <XAxis
                 dataKey="date"
-                stroke="hsl(var(--muted-foreground))"
+                stroke="var(--muted-foreground)"
                 fontSize={12}
                 tickLine={false}
                 axisLine={false}
               />
               <YAxis
-                stroke="hsl(var(--muted-foreground))"
+                stroke="var(--muted-foreground)"
                 fontSize={12}
                 tickLine={false}
                 axisLine={false}
-                tickFormatter={(value: number) => formatValue(value, valueMode)}
+                tickFormatter={(value: number) =>
+                  formatValue(value, valueMode)
+                }
               />
               <Tooltip content={<CustomTooltip valueMode={valueMode} />} />
               <Legend />

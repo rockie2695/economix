@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/popover";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { useLocale } from "@/lib/LocaleContext";
 import type { Indicator } from "@/types";
 
 interface IndicatorSelectorProps {
@@ -18,11 +19,63 @@ interface IndicatorSelectorProps {
   onSelectionChange: (ids: string[]) => void;
 }
 
+interface GroupedIndicators {
+  type: "country" | "global";
+  typeLabel: string;
+  groups: { label: string; items: Indicator[] }[];
+}
+
+function groupIndicators(
+  indicators: Indicator[],
+  t: (key: string) => string
+): GroupedIndicators[] {
+  const countryIndicators = indicators.filter(
+    (i) => i.categoryType === "country"
+  );
+  const globalIndicators = indicators.filter(
+    (i) => i.categoryType === "global"
+  );
+
+  const countryMap = new Map<string, Indicator[]>();
+  for (const ind of countryIndicators) {
+    const key = ind.country ?? "Other";
+    const arr = countryMap.get(key) ?? [];
+    arr.push(ind);
+    countryMap.set(key, arr);
+  }
+
+  const countryOrder = ["US", "EuroArea", "Japan", "China", "UK"];
+  const countryGroups = countryOrder
+    .filter((c) => countryMap.has(c))
+    .map((c) => ({
+      label: t(`country_${c}`),
+      items: countryMap.get(c)!,
+    }));
+
+  const globalMap = new Map<string, Indicator[]>();
+  for (const ind of globalIndicators) {
+    const arr = globalMap.get(ind.category) ?? [];
+    arr.push(ind);
+    globalMap.set(ind.category, arr);
+  }
+
+  const globalGroups = Array.from(globalMap.entries()).map(([cat, items]) => ({
+    label: t(cat),
+    items,
+  }));
+
+  return [
+    { type: "country", typeLabel: t("countrySpecific"), groups: countryGroups },
+    { type: "global", typeLabel: t("global"), groups: globalGroups },
+  ];
+}
+
 export function IndicatorSelector({
   indicators,
   selectedIds,
   onSelectionChange,
 }: IndicatorSelectorProps) {
+  const { t } = useLocale();
   const [open, setOpen] = React.useState(false);
   const [search, setSearch] = React.useState("");
 
@@ -30,10 +83,15 @@ export function IndicatorSelector({
     (ind) =>
       ind.name.toLowerCase().includes(search.toLowerCase()) ||
       ind.category.toLowerCase().includes(search.toLowerCase()) ||
-      (ind.description && ind.description.toLowerCase().includes(search.toLowerCase()))
+      (ind.description &&
+        ind.description.toLowerCase().includes(search.toLowerCase()))
   );
 
-  const selectedIndicators = indicators.filter((i) => selectedIds.includes(i.id));
+  const grouped = groupIndicators(filtered, t);
+
+  const selectedIndicators = indicators.filter((i) =>
+    selectedIds.includes(i.id)
+  );
 
   const toggleIndicator = (id: string) => {
     if (selectedIds.includes(id)) {
@@ -58,7 +116,7 @@ export function IndicatorSelector({
           <div className="flex flex-wrap gap-1">
             {selectedIndicators.length === 0 ? (
               <span className="text-muted-foreground">
-                Select indicators...
+                {t("selectIndicators")}
               </span>
             ) : (
               selectedIndicators.map((ind) => (
@@ -85,7 +143,7 @@ export function IndicatorSelector({
           <div className="flex items-center">
             <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
             <Input
-              placeholder="Search indicators..."
+              placeholder={t("searchIndicators")}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0"
@@ -95,39 +153,61 @@ export function IndicatorSelector({
         <div className="max-h-[300px] overflow-y-auto p-1">
           {filtered.length === 0 ? (
             <div className="py-6 text-center text-sm text-muted-foreground">
-              No indicators found.
+              {t("noIndicatorsFound")}
             </div>
           ) : (
-            filtered.map((indicator) => (
-              <div
-                key={indicator.id}
-                className={cn(
-                  "relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm",
-                  "hover:bg-accent hover:text-accent-foreground",
-                  "outline-none",
-                  selectedIds.includes(indicator.id) && "bg-accent"
-                )}
-                onClick={() => toggleIndicator(indicator.id)}
-              >
-                <Check
-                  className={cn(
-                    "mr-2 h-4 w-4",
-                    selectedIds.includes(indicator.id)
-                      ? "opacity-100"
-                      : "opacity-0"
-                  )}
-                />
-                <div className="flex-1 min-w-0">
-                  <div className="font-medium truncate">{indicator.name}</div>
-                  <div className="text-xs text-muted-foreground truncate">
-                    {indicator.category} · {indicator.unit}
+            grouped.map((section) => {
+              if (section.groups.length === 0) return null;
+              return (
+                <div key={section.type}>
+                  <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                    {section.typeLabel}
                   </div>
+                  {section.groups.map((group) => (
+                    <div key={group.label}>
+                      <div className="px-2 py-1 text-xs text-muted-foreground font-medium">
+                        {group.label}
+                      </div>
+                      {group.items.map((indicator) => (
+                        <div
+                          key={indicator.id}
+                          className={cn(
+                            "relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm pl-4",
+                            "hover:bg-accent hover:text-accent-foreground",
+                            "outline-none",
+                            selectedIds.includes(indicator.id) && "bg-accent"
+                          )}
+                          onClick={() => toggleIndicator(indicator.id)}
+                        >
+                          <Check
+                            className={cn(
+                              "mr-2 h-4 w-4",
+                              selectedIds.includes(indicator.id)
+                                ? "opacity-100"
+                                : "opacity-0"
+                            )}
+                          />
+                          <div className="flex-1 min-w-0">
+                            <div className="font-medium truncate">
+                              {indicator.name}
+                            </div>
+                            <div className="text-xs text-muted-foreground truncate">
+                              {t(indicator.category)} · {indicator.unit}
+                            </div>
+                          </div>
+                          <Badge
+                            variant="outline"
+                            className="ml-2 shrink-0 text-[10px]"
+                          >
+                            {indicator.source.toUpperCase()}
+                          </Badge>
+                        </div>
+                      ))}
+                    </div>
+                  ))}
                 </div>
-                <Badge variant="outline" className="ml-2 shrink-0 text-[10px]">
-                  {indicator.source.toUpperCase()}
-                </Badge>
-              </div>
-            ))
+              );
+            })
           )}
         </div>
       </PopoverContent>

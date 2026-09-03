@@ -3,6 +3,7 @@
 import * as React from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useLocale } from "@/lib/LocaleContext";
 import type { DateRange } from "@/types";
 
 interface DatePickerRangeProps {
@@ -11,23 +12,21 @@ interface DatePickerRangeProps {
 }
 
 export function DatePickerRange({ value, onChange }: DatePickerRangeProps) {
+  const { t } = useLocale();
+
   return (
     <div className="flex items-center gap-2">
       <Input
         type="date"
         value={value.startDate}
-        onChange={(e) =>
-          onChange({ ...value, startDate: e.target.value })
-        }
+        onChange={(e) => onChange({ ...value, startDate: e.target.value })}
         className="w-[160px]"
       />
-      <span className="text-muted-foreground">to</span>
+      <span className="text-muted-foreground">{t("to")}</span>
       <Input
         type="date"
         value={value.endDate}
-        onChange={(e) =>
-          onChange({ ...value, endDate: e.target.value })
-        }
+        onChange={(e) => onChange({ ...value, endDate: e.target.value })}
         className="w-[160px]"
       />
       <div className="flex gap-1 ml-2">
@@ -86,7 +85,7 @@ export function DatePickerRange({ value, onChange }: DatePickerRangeProps) {
             });
           }}
         >
-          All
+          {t("all")}
         </Button>
       </div>
     </div>

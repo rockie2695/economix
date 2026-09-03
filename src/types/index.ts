@@ -31,6 +31,10 @@ export interface Indicator {
   category: string;
   /** Human-readable description */
   description?: string;
+  /** Whether this is country-specific or global data */
+  categoryType: "country" | "global";
+  /** Country name key (e.g. "US", "EuroArea", "Japan", "China", "UK") — undefined for global */
+  country?: string;
 }
 
 /** A single data point from the API (date + value pair) */
