@@ -36,7 +36,6 @@ export function processDataForChart(
             index > 0 ? point.value - series.data[index - 1].value : 0;
           break;
         case "percentage":
-        case "percentageChange":
           displayValue =
             index > 0
               ? ((point.value - series.data[index - 1].value) /
@@ -44,6 +43,14 @@ export function processDataForChart(
                 100
               : 0;
           break;
+        case "percentageChange": {
+          const baseValue = series.data[0]?.value ?? 0;
+          displayValue =
+            baseValue !== 0
+              ? ((point.value - baseValue) / baseValue) * 100
+              : 0;
+          break;
+        }
         default:
           displayValue = point.value;
       }

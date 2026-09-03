@@ -137,8 +137,8 @@ User selects indicators
 |------|---------|----------|
 | `value` | `point.value` | Default raw view |
 | `valueChange` | `point.value - prev.value` | Absolute change |
-| `percentage` | `((point.value - prev.value) / prev.value) * 100` | % change |
-| `percentageChange` | Same as `percentage` | Alias |
+| `percentage` | `((point.value - prev.value) / prev.value) * 100` | Period-over-period % change |
+| `percentageChange` | `((point.value - first.value) / first.value) * 100` | Cumulative net change from start |
 
 ### Chart Color Assignment
 

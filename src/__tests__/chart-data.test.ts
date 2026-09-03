@@ -64,11 +64,16 @@ describe("processDataForChart", () => {
     expect(Number(result[2].gdp)).toBeCloseTo(13.1579, 2);
   });
 
-  it("should treat 'percentageChange' same as 'percentage'", () => {
-    const result1 = processDataForChart(sampleData, "percentage");
-    const result2 = processDataForChart(sampleData, "percentageChange");
+  it("should compute cumulative net change from start in 'percentageChange' mode", () => {
+    const result = processDataForChart(sampleData, "percentageChange");
 
-    expect(result1).toEqual(result2);
+    expect(result).toHaveLength(3);
+    // First point is always 0 (base)
+    expect(result[0].gdp).toBe(0);
+    // (19000 - 21000) / 21000 * 100 = -9.523809...
+    expect(Number(result[1].gdp)).toBeCloseTo(-9.5238, 2);
+    // (21500 - 21000) / 21000 * 100 = 2.380952...
+    expect(Number(result[2].gdp)).toBeCloseTo(2.381, 2);
   });
 
   it("should merge multiple indicators by date", () => {

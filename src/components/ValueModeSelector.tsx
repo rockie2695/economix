@@ -1,6 +1,11 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import {
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+} from "@/components/ui/tooltip";
 import { useLocale } from "@/lib/LocaleContext";
 import type { ValueMode } from "@/types";
 import { cn } from "@/lib/utils";
@@ -13,29 +18,54 @@ interface ValueModeSelectorProps {
 export function ValueModeSelector({ value, onChange }: ValueModeSelectorProps) {
   const { t } = useLocale();
 
-  const modes: { value: ValueMode; label: string }[] = [
-    { value: "value", label: t("value") },
-    { value: "valueChange", label: t("change") },
-    { value: "percentage", label: t("percent") },
-    { value: "percentageChange", label: t("percentChange") },
+  const modes: {
+    value: ValueMode;
+    label: string;
+    description: string;
+  }[] = [
+    { value: "value", label: t("value"), description: t("valueDescription") },
+    {
+      value: "valueChange",
+      label: t("change"),
+      description: t("changeDescription"),
+    },
+    {
+      value: "percentage",
+      label: t("percent"),
+      description: t("percentDescription"),
+    },
+    {
+      value: "percentageChange",
+      label: t("percentChange"),
+      description: t("percentChangeDescription"),
+    },
   ];
 
   return (
-    <div className="flex rounded-lg border bg-muted p-1">
-      {modes.map((mode) => (
-        <Button
-          key={mode.value}
-          variant="ghost"
-          size="sm"
-          onClick={() => onChange(mode.value)}
-          className={cn(
-            "flex-1",
-            value === mode.value && "bg-background shadow-sm text-foreground"
-          )}
-        >
-          {mode.label}
-        </Button>
-      ))}
-    </div>
+    <Tooltip>
+      <div className="flex rounded-lg border bg-muted p-1">
+        {modes.map((mode) => (
+          <Tooltip key={mode.value}>
+            <TooltipTrigger
+              render={
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => onChange(mode.value)}
+                  className={cn(
+                    "flex-1",
+                    value === mode.value &&
+                      "bg-background shadow-sm text-foreground"
+                  )}
+                >
+                  {mode.label}
+                </Button>
+              }
+            />
+            <TooltipContent side="bottom">{mode.description}</TooltipContent>
+          </Tooltip>
+        ))}
+      </div>
+    </Tooltip>
   );
 }

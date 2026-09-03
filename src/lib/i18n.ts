@@ -19,6 +19,11 @@ export type TranslationKey =
   | "change"
   | "percent"
   | "percentChange"
+  // Value mode descriptions (tooltips)
+  | "valueDescription"
+  | "changeDescription"
+  | "percentDescription"
+  | "percentChangeDescription"
   // Date picker
   | "to"
   | "all"
@@ -91,6 +96,10 @@ export const translations: Record<Locale, Record<TranslationKey, string>> = {
     consumption: "Consumption",
     commodities: "Commodities",
     recessionRisk: "Recession Risk",
+    valueDescription: "Raw numerical value",
+    changeDescription: "Change from previous data point",
+    percentDescription: "Percentage change from previous data point",
+    percentChangeDescription: "Cumulative net change from start of period",
   },
   "zh-TW": {
     appTitle: "經濟指標",
@@ -132,6 +141,10 @@ export const translations: Record<Locale, Record<TranslationKey, string>> = {
     consumption: "消費",
     commodities: "大宗商品",
     recessionRisk: "衰退風險",
+    valueDescription: "原始數值",
+    changeDescription: "較前一筆資料的變動",
+    percentDescription: "較前一筆資料的百分比變動",
+    percentChangeDescription: "自期間起始以來的累計淨變動",
   },
 };
 

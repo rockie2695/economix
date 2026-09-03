@@ -49,7 +49,8 @@ open http://localhost:3000
 - **Country-specific grouping** — Indicators organized by country and global categories
 - **Searchable indicator picker** — Filter by name, category, or description with per-indicator loading/error states
 - **Date range control** — Custom date pickers + quick presets (1Y, 5Y, 10Y, All)
-- **4 display modes** — Raw value, value change, percentage, percentage change
+- **4 display modes** — Raw value, value change, percentage, cumulative percentage change
+- **Mode tooltips** — Hover over display mode buttons to see what each mode shows
 - **Interactive tooltips** — Hover over chart lines to see exact values
 - **Stats cards** — Current value, change %, and trend arrows at a glance
 - **i18n support** — Switch between 繁中 and English with one click
@@ -410,14 +411,14 @@ Date range input with quick-select buttons:
 
 ### `ValueModeSelector.tsx`
 
-A segmented control with 4 display modes:
+A segmented control with 4 display modes. Each button has a tooltip describing what it shows:
 
-| Mode | Description |
-|------|-------------|
-| **Value** | Raw numerical value |
-| **Change** | Absolute change from previous data point |
-| **%** | Percentage change from previous data point |
-| **% Change** | Same as % (alias) |
+| Mode | Description | Tooltip |
+|------|-------------|---------|
+| **Value** | Raw numerical value | "Raw numerical value" |
+| **Change** | Absolute change from previous data point | "Change from previous data point" |
+| **%** | Percentage change from previous data point | "Percentage change from previous data point" |
+| **% Change** | Cumulative net change from start of period | "Cumulative net change from start of period" |
 
 ### `DataChart.tsx`
 

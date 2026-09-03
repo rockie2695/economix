@@ -85,7 +85,7 @@ No other code changes needed.
 - React Compiler for automatic memoization
 - Chart colors assigned by selection order via shared CHART_COLORS
 - Stats compute change from previous data point
-- 4 display modes: raw value, change, %, % change
+- 4 display modes: raw value, change, % (period-over-period), % change (cumulative from start)
 - Indicators grouped by `categoryType` (country vs global) and `country`
 - i18n keys defined in `src/lib/i18n.ts`, used via `useLocale().t("key")`
 - Recession risk indicators: yield curve (10Y-2Y, 10Y-3M) and Leading Economic Index
