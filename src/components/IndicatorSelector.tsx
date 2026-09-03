@@ -138,8 +138,8 @@ export function IndicatorSelector({
                   }}
                 >
                   {ind.country
-                    ? `${t(`country_${ind.country}`)} · ${ind.name}`
-                    : ind.name}
+                    ? `${t(`country_${ind.country}`)} · ${ind.name} · ${t(ind.category)}`
+                    : `${ind.name} · ${t(ind.category)}`}
                   <X className="ml-1 h-3 w-3 cursor-pointer" />
                 </Badge>
               ))
@@ -216,6 +216,9 @@ export function IndicatorSelector({
                                 )}
                               </div>
                               <div className="text-xs text-muted-foreground truncate">
+                                {indicator.country
+                                  ? `${t(`country_${indicator.country}`)} · `
+                                  : ""}
                                 {t(indicator.category)} · {indicator.unit}
                               </div>
                             </div>
