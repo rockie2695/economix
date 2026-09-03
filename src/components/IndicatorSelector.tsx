@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Check, ChevronsUpDown, Search, X } from "lucide-react";
+import { Check, ChevronsUpDown, Search, X, Loader2, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   Popover,
@@ -17,6 +17,8 @@ interface IndicatorSelectorProps {
   indicators: Indicator[];
   selectedIds: string[];
   onSelectionChange: (ids: string[]) => void;
+  loadingIds?: Set<string>;
+  errors?: Map<string, string>;
 }
 
 interface GroupedIndicators {
@@ -44,7 +46,10 @@ function groupIndicators(
     countryMap.set(key, arr);
   }
 
-  const countryOrder = ["US", "EuroArea", "Japan", "China", "UK"];
+  const countryOrder = [
+    "US", "EuroArea", "Japan", "China", "UK",
+    "India", "Brazil", "SouthKorea", "Canada", "Australia",
+  ];
   const countryGroups = countryOrder
     .filter((c) => countryMap.has(c))
     .map((c) => ({
@@ -74,6 +79,8 @@ export function IndicatorSelector({
   indicators,
   selectedIds,
   onSelectionChange,
+  loadingIds = new Set(),
+  errors = new Map(),
 }: IndicatorSelectorProps) {
   const { t } = useLocale();
   const [open, setOpen] = React.useState(false);
@@ -168,41 +175,56 @@ export function IndicatorSelector({
                       <div className="px-2 py-1 text-xs text-muted-foreground font-medium">
                         {group.label}
                       </div>
-                      {group.items.map((indicator) => (
-                        <div
-                          key={indicator.id}
-                          className={cn(
-                            "relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm pl-4",
-                            "hover:bg-accent hover:text-accent-foreground",
-                            "outline-none",
-                            selectedIds.includes(indicator.id) && "bg-accent"
-                          )}
-                          onClick={() => toggleIndicator(indicator.id)}
-                        >
-                          <Check
+                      {group.items.map((indicator) => {
+                        const isLoading = loadingIds.has(indicator.id);
+                        const errorMsg = errors.get(indicator.id);
+                        return (
+                          <div
+                            key={indicator.id}
                             className={cn(
-                              "mr-2 h-4 w-4",
-                              selectedIds.includes(indicator.id)
-                                ? "opacity-100"
-                                : "opacity-0"
+                              "relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm pl-4",
+                              "hover:bg-accent hover:text-accent-foreground",
+                              "outline-none",
+                              selectedIds.includes(indicator.id) && "bg-accent"
                             )}
-                          />
-                          <div className="flex-1 min-w-0">
-                            <div className="font-medium truncate">
-                              {indicator.name}
-                            </div>
-                            <div className="text-xs text-muted-foreground truncate">
-                              {t(indicator.category)} · {indicator.unit}
-                            </div>
-                          </div>
-                          <Badge
-                            variant="outline"
-                            className="ml-2 shrink-0 text-[10px]"
+                            onClick={() => toggleIndicator(indicator.id)}
                           >
-                            {indicator.source.toUpperCase()}
-                          </Badge>
-                        </div>
-                      ))}
+                            <Check
+                              className={cn(
+                                "mr-2 h-4 w-4",
+                                selectedIds.includes(indicator.id)
+                                  ? "opacity-100"
+                                  : "opacity-0"
+                              )}
+                            />
+                            <div className="flex-1 min-w-0">
+                              <div className="font-medium truncate flex items-center gap-1">
+                                {indicator.name}
+                                {isLoading && (
+                                  <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />
+                                )}
+                                {errorMsg && (
+                                  <span
+                                    className="text-red-500 cursor-help"
+                                    title={errorMsg}
+                                  >
+                                    <AlertCircle className="h-3 w-3 inline" />
+                                  </span>
+                                )}
+                              </div>
+                              <div className="text-xs text-muted-foreground truncate">
+                                {t(indicator.category)} · {indicator.unit}
+                              </div>
+                            </div>
+                            <Badge
+                              variant="outline"
+                              className="ml-2 shrink-0 text-[10px]"
+                            >
+                              {indicator.source.toUpperCase()}
+                            </Badge>
+                          </div>
+                        );
+                      })}
                     </div>
                   ))}
                 </div>

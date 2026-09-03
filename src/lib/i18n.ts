@@ -31,6 +31,11 @@ export type TranslationKey =
   | "country_Japan"
   | "country_China"
   | "country_UK"
+  | "country_India"
+  | "country_Brazil"
+  | "country_SouthKorea"
+  | "country_Canada"
+  | "country_Australia"
   // Categories
   | "nationalAccounts"
   | "labor"
@@ -42,7 +47,8 @@ export type TranslationKey =
   | "sentiment"
   | "trade"
   | "consumption"
-  | "commodities";
+  | "commodities"
+  | "recessionRisk";
 
 export const translations: Record<Locale, Record<TranslationKey, string>> = {
   en: {
@@ -68,6 +74,11 @@ export const translations: Record<Locale, Record<TranslationKey, string>> = {
     country_Japan: "Japan",
     country_China: "China",
     country_UK: "United Kingdom",
+    country_India: "India",
+    country_Brazil: "Brazil",
+    country_SouthKorea: "South Korea",
+    country_Canada: "Canada",
+    country_Australia: "Australia",
     nationalAccounts: "National Accounts",
     labor: "Labor",
     prices: "Prices",
@@ -79,6 +90,7 @@ export const translations: Record<Locale, Record<TranslationKey, string>> = {
     trade: "Trade",
     consumption: "Consumption",
     commodities: "Commodities",
+    recessionRisk: "Recession Risk",
   },
   "zh-TW": {
     appTitle: "經濟指標",
@@ -103,6 +115,11 @@ export const translations: Record<Locale, Record<TranslationKey, string>> = {
     country_Japan: "日本",
     country_China: "中國",
     country_UK: "英國",
+    country_India: "印度",
+    country_Brazil: "巴西",
+    country_SouthKorea: "南韓",
+    country_Canada: "加拿大",
+    country_Australia: "澳洲",
     nationalAccounts: "國民帳戶",
     labor: "勞動",
     prices: "物價",
@@ -114,6 +131,7 @@ export const translations: Record<Locale, Record<TranslationKey, string>> = {
     trade: "國際貿易",
     consumption: "消費",
     commodities: "大宗商品",
+    recessionRisk: "衰退風險",
   },
 };
 

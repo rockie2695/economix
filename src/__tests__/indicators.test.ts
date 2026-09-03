@@ -75,7 +75,7 @@ describe("indicators", () => {
     }
   });
 
-  it("should contain indicators from all 5 countries", () => {
+  it("should contain indicators from all 10 countries", () => {
     const countryIndicators = indicators.filter(
       (i) => i.categoryType === "country"
     );
@@ -86,9 +86,26 @@ describe("indicators", () => {
     expect(countries.has("Japan")).toBe(true);
     expect(countries.has("China")).toBe(true);
     expect(countries.has("UK")).toBe(true);
+    expect(countries.has("India")).toBe(true);
+    expect(countries.has("Brazil")).toBe(true);
+    expect(countries.has("SouthKorea")).toBe(true);
+    expect(countries.has("Canada")).toBe(true);
+    expect(countries.has("Australia")).toBe(true);
   });
 
-  it("should have at least 25 total indicators", () => {
-    expect(indicators.length).toBeGreaterThanOrEqual(25);
+  it("should have recession risk indicators", () => {
+    const recessionIndicators = indicators.filter(
+      (i) => i.category === "recessionRisk"
+    );
+    expect(recessionIndicators.length).toBeGreaterThanOrEqual(3);
+
+    const ids = recessionIndicators.map((i) => i.id);
+    expect(ids).toContain("yield_curve_10y2y");
+    expect(ids).toContain("yield_curve_10y3m");
+    expect(ids).toContain("leading_index");
+  });
+
+  it("should have at least 40 total indicators", () => {
+    expect(indicators.length).toBeGreaterThanOrEqual(40);
   });
 });

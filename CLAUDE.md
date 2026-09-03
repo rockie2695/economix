@@ -2,12 +2,14 @@
 
 ## What is this?
 
-Economix is a Next.js dashboard that fetches and visualizes macroeconomic data from FRED and DBnomics APIs. Supports 繁中/English language switching.
+Economix is a Next.js dashboard that fetches and visualizes macroeconomic data from FRED and DBnomics APIs. Supports 繁中/English language switching and dark/light themes.
 
 ## Quick Reference
 
 - **Stack**: Next.js 16, TypeScript, Tailwind CSS 4, shadcn/ui (Base UI), Recharts 3
-- **Theme**: Dark mode by default
+- **Compiler**: React Compiler (babel-plugin-react-compiler) for automatic memoization
+- **State**: SWR for data fetching, URL state persistence for shareable links
+- **Theme**: Dark/light toggle, persisted to localStorage
 - **i18n**: React Context (en/zh-TW), `useLocale()` hook, localStorage persistence
 - **Testing**: Vitest (`npm test`)
 - **APIs**: FRED (requires key), DBnomics (free)
@@ -18,7 +20,8 @@ Economix is a Next.js dashboard that fetches and visualizes macroeconomic data f
 ```bash
 npm install
 npm run dev        # http://localhost:3000
-npm test           # Run tests
+npm test           # Run tests (32 tests)
+npm run build      # Production build
 ```
 
 ## Environment
@@ -43,7 +46,7 @@ Edit `src/lib/indicators.ts`, add entry:
   category: "nationalAccounts",  // category key from i18n
   description: "Description",
   categoryType: "country",  // or "global"
-  country: "US",  // "US", "EuroArea", "Japan", "China", "UK" — omit for global
+  country: "US",  // "US", "EuroArea", "Japan", "China", "UK", "India", "Brazil", "SouthKorea", "Canada", "Australia" — omit for global
 }
 ```
 
@@ -53,14 +56,19 @@ No other code changes needed.
 
 | File | Purpose |
 |------|---------|
-| `src/components/Dashboard.tsx` | Main state, data fetching, layout. Exports `processDataForChart()` and `calculateStats()` |
-| `src/components/IndicatorSelector.tsx` | Grouped multi-select popover (by country/global) |
-| `src/components/DataChart.tsx` | Recharts wrapper |
+| `src/components/Dashboard.tsx` | Main state (SWR, URL persistence, Promise.allSettled), layout. Exports `processDataForChart()` and `calculateStats()` |
+| `src/components/IndicatorSelector.tsx` | Grouped multi-select popover with per-indicator loading/error UI |
+| `src/components/DataChart.tsx` | Recharts wrapper (responsive height) |
 | `src/components/StatsCards.tsx` | Stats display |
 | `src/components/LanguageSwitcher.tsx` | 繁中/EN toggle |
-| `src/lib/indicators.ts` | Indicator definitions (29 indicators, 5 countries + global) |
-| `src/lib/i18n.ts` | Translation dictionaries (en/zh-TW) |
+| `src/components/ThemeToggle.tsx` | Dark/light theme toggle |
+| `src/components/ExportButton.tsx` | CSV export |
+| `src/components/Providers.tsx` | Context providers (Locale + Theme) |
+| `src/lib/indicators.ts` | Indicator definitions (52 indicators, 10 countries + global + recession risk) |
+| `src/lib/i18n.ts` | Translation dictionaries (en/zh-TW, 50 keys) |
 | `src/lib/LocaleContext.tsx` | React Context: `useLocale()` → `{ locale, setLocale, t }` |
+| `src/lib/ThemeContext.tsx` | React Context: `useTheme()` → `{ theme, setTheme }` |
+| `src/lib/constants.ts` | Shared constants (CHART_COLORS) |
 | `src/types/index.ts` | TypeScript interfaces |
 | `src/app/api/fred/route.ts` | FRED API proxy |
 | `src/app/api/dbnomics/route.ts` | DBnomics API proxy |
@@ -68,12 +76,19 @@ No other code changes needed.
 ## Architecture Notes
 
 - API routes hide external API keys from the client
-- Data is fetched in parallel for multiple indicators
-- Chart colors are assigned by selection order
+- Promise.allSettled for resilient parallel fetching — individual failures don't block others
+- Per-indicator `loadingIds` and `fetchErrors` state for granular UI feedback
+- `useMemo` for chartData and stats computation
+- URL state persistence — selected indicators, dates, and display mode synced to URL params
+- Dark/light theme via CSS class on `<html>`, persisted to localStorage
+- SWR for data fetching with deduplication and caching
+- React Compiler for automatic memoization
+- Chart colors assigned by selection order via shared CHART_COLORS
 - Stats compute change from previous data point
 - 4 display modes: raw value, change, %, % change
 - Indicators grouped by `categoryType` (country vs global) and `country`
 - i18n keys defined in `src/lib/i18n.ts`, used via `useLocale().t("key")`
+- Recession risk indicators: yield curve (10Y-2Y, 10Y-3M) and Leading Economic Index
 - Tests in `src/__tests__/`, run with `npm test`
 
 ---

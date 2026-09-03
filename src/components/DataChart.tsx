@@ -13,6 +13,7 @@ import {
 } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useLocale } from "@/lib/LocaleContext";
+import { CHART_COLORS } from "@/lib/constants";
 import type { ChartDataPoint, ValueMode } from "@/types";
 
 interface DataChartProps {
@@ -21,17 +22,6 @@ interface DataChartProps {
   valueMode: ValueMode;
   title?: string;
 }
-
-const CHART_COLORS = [
-  "#3b82f6", // blue
-  "#ef4444", // red
-  "#10b981", // green
-  "#f59e0b", // amber
-  "#8b5cf6", // violet
-  "#ec4899", // pink
-  "#06b6d4", // cyan
-  "#f97316", // orange
-];
 
 const formatValue = (value: number, mode: ValueMode): string => {
   if (mode === "percentage" || mode === "percentageChange") {
@@ -88,51 +78,53 @@ export function DataChart({
       </CardHeader>
       <CardContent>
         {data.length === 0 || indicators.length === 0 ? (
-          <div className="h-[400px] flex items-center justify-center text-muted-foreground">
+          <div className="h-[300px] sm:h-[350px] lg:h-[400px] flex items-center justify-center text-muted-foreground">
             {t("selectToDisplay")}
           </div>
         ) : (
-          <ResponsiveContainer width="100%" height={400}>
-            <LineChart
-              data={data}
-              margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-            >
-              <CartesianGrid
-                strokeDasharray="3 3"
-                stroke="var(--border)"
-              />
-              <XAxis
-                dataKey="date"
-                stroke="var(--muted-foreground)"
-                fontSize={12}
-                tickLine={false}
-                axisLine={false}
-              />
-              <YAxis
-                stroke="var(--muted-foreground)"
-                fontSize={12}
-                tickLine={false}
-                axisLine={false}
-                tickFormatter={(value: number) =>
-                  formatValue(value, valueMode)
-                }
-              />
-              <Tooltip content={<CustomTooltip valueMode={valueMode} />} />
-              <Legend />
-              {indicators.map((indicator, index) => (
-                <Line
-                  key={indicator.id}
-                  type="monotone"
-                  dataKey={indicator.id}
-                  name={indicator.name}
-                  stroke={CHART_COLORS[index % CHART_COLORS.length]}
-                  strokeWidth={2}
-                  dot={false}
-                  activeDot={{ r: 6, strokeWidth: 2 }}
+          <div className="h-[300px] sm:h-[350px] lg:h-[400px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart
+                data={data}
+                margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+              >
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  stroke="var(--border)"
                 />
-              ))}
-            </LineChart>
-          </ResponsiveContainer>
+                <XAxis
+                  dataKey="date"
+                  stroke="var(--muted-foreground)"
+                  fontSize={12}
+                  tickLine={false}
+                  axisLine={false}
+                />
+                <YAxis
+                  stroke="var(--muted-foreground)"
+                  fontSize={12}
+                  tickLine={false}
+                  axisLine={false}
+                  tickFormatter={(value: number) =>
+                    formatValue(value, valueMode)
+                  }
+                />
+                <Tooltip content={<CustomTooltip valueMode={valueMode} />} />
+                <Legend />
+                {indicators.map((indicator, index) => (
+                  <Line
+                    key={indicator.id}
+                    type="monotone"
+                    dataKey={indicator.id}
+                    name={indicator.name}
+                    stroke={CHART_COLORS[index % CHART_COLORS.length]}
+                    strokeWidth={2}
+                    dot={false}
+                    activeDot={{ r: 6, strokeWidth: 2 }}
+                  />
+                ))}
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
         )}
       </CardContent>
     </Card>

@@ -12,9 +12,9 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 ## Project Overview
 
-Economix is a macroeconomic data visualization dashboard. It fetches data from FRED and DBnomics APIs, displays time-series charts, and computes basic statistics. Supports 繁中/English language switching.
+Economix is a macroeconomic data visualization dashboard. It fetches data from FRED and DBnomics APIs, displays time-series charts, and computes basic statistics. Supports 繁中/English language switching and dark/light themes.
 
-**Stack**: Next.js 16 (App Router), TypeScript, Tailwind CSS 4, shadcn/ui (Base UI), Recharts 3
+**Stack**: Next.js 16 (App Router), TypeScript, Tailwind CSS 4, shadcn/ui (Base UI), Recharts 3, React Compiler
 
 ## File Map
 
@@ -24,23 +24,27 @@ src/
 │   ├── api/
 │   │   ├── fred/route.ts         # FRED API proxy (server-side, hides API key)
 │   │   └── dbnomics/route.ts     # DBnomics API proxy (server-side)
-│   ├── layout.tsx                # Root layout, dark theme, Geist font
+│   ├── layout.tsx                # Root layout, Geist font
 │   ├── page.tsx                  # Entry → renders <Dashboard />
 │   └── globals.css               # Tailwind imports + shadcn CSS variables
 ├── components/
-│   ├── Dashboard.tsx             # Main orchestrator (state, fetch, layout)
-│   ├── IndicatorSelector.tsx     # Searchable multi-select popover (grouped)
+│   ├── Dashboard.tsx             # Main orchestrator (SWR, URL state, Promise.allSettled)
+│   ├── IndicatorSelector.tsx     # Searchable multi-select popover (grouped, loading/error)
 │   ├── DatePickerRange.tsx       # Date range inputs + quick presets
 │   ├── ValueModeSelector.tsx     # Segmented control (4 modes)
-│   ├── DataChart.tsx             # Recharts LineChart wrapper
+│   ├── DataChart.tsx             # Recharts LineChart wrapper (responsive height)
 │   ├── StatsCards.tsx            # Stats cards grid
 │   ├── LanguageSwitcher.tsx      # 繁中/EN toggle button
-│   ├── Providers.tsx             # Client-side context providers wrapper
+│   ├── ThemeToggle.tsx           # Dark/light theme toggle
+│   ├── ExportButton.tsx          # CSV export button
+│   ├── Providers.tsx             # Client-side context providers (Locale + Theme)
 │   └── ui/                       # shadcn/ui primitives (button, card, etc.)
 ├── lib/
-│   ├── indicators.ts             # Indicator definitions array (29 indicators)
-│   ├── i18n.ts                   # Translation dictionaries (en/zh-TW)
+│   ├── indicators.ts             # Indicator definitions array (52 indicators)
+│   ├── i18n.ts                   # Translation dictionaries (en/zh-TW, 50 keys)
 │   ├── LocaleContext.tsx          # React Context for locale state
+│   ├── ThemeContext.tsx           # React Context for theme state
+│   ├── constants.ts              # Shared constants (CHART_COLORS)
 │   └── utils.ts                  # cn() merge helper
 ├── types/
 │   └── index.ts                  # All TypeScript interfaces
@@ -66,7 +70,7 @@ interface Indicator {
   category: string;        // category key (i18n), e.g. "nationalAccounts"
   description?: string;    // human-readable description
   categoryType: "country" | "global";  // country-specific vs global data
-  country?: string;        // "US", "EuroArea", "Japan", "China", "UK" — undefined for global
+  country?: string;        // "US", "EuroArea", "Japan", "China", "UK", "India", "Brazil", "SouthKorea", "Canada", "Australia" — undefined for global
 }
 
 // Raw data point from API
@@ -118,13 +122,12 @@ interface StatsData {
 
 ```
 User selects indicators
-  → Dashboard.selectedIds updates
-  → useEffect triggers fetchData(selectedIds)
-  → Parallel fetch() to /api/fred or /api/dbnomics
+  → Dashboard.selectedIds updates (synced to URL params)
+  → useSWR triggers fetchData(selectedIds)
+  → Promise.allSettled for parallel fetch to /api/fred or /api/dbnomics
   → API routes proxy to external APIs (hides keys)
-  → Response stored in Dashboard.allData
-  → processDataForChart() transforms by ValueMode
-  → calculateStats() computes stats
+  → Per-indicator loadingIds and fetchErrors state updated
+  → useMemo computes chartData and stats
   → DataChart + StatsCards render
 ```
 
@@ -141,7 +144,8 @@ User selects indicators
 
 Colors are assigned by selection order, not indicator ID:
 ```typescript
-const CHART_COLORS = ["#3b82f6", "#ef4444", "#10b981", ...];
+// src/lib/constants.ts
+export const CHART_COLORS = ["#3b82f6", "#ef4444", "#10b981", ...];
 // Color = CHART_COLORS[selectionIndex % CHART_COLORS.length]
 ```
 
@@ -157,6 +161,16 @@ const { locale, setLocale, t } = useLocale();
 
 Translation keys defined in `src/lib/i18n.ts`. Categories and countries use i18n keys (e.g., `t(indicator.category)`, `t("country_US")`).
 
+### Theme
+
+Theme is managed via React Context:
+```typescript
+const { theme, setTheme } = useTheme();
+// theme: "dark" | "light"
+// setTheme("light") — switches theme, persists to localStorage
+// Applied via CSS class on <html>
+```
+
 ### Indicator Grouping
 
 Indicators are grouped by `categoryType` → `country` (or `category` for global):
@@ -167,9 +181,30 @@ Country-specific
   Japan → GDP, CPI, BOJ Rate, ...
   China → GDP, CPI, Interest Rate, ...
   UK → GDP, CPI, BOE Rate, ...
+  India → GDP, CPI, Interest Rate, ...
+  Brazil → GDP, CPI, Interest Rate, ...
+  South Korea → GDP, CPI, Interest Rate, ...
+  Canada → GDP, Unemployment, CPI, Interest Rate, ...
+  Australia → GDP, Unemployment, CPI, Interest Rate, ...
 Global
   Commodities → WTI Oil, Gold, Sugar, Natural Gas
+  Recession Risk → Yield Curve (10Y-2Y), Yield Curve (10Y-3M), Leading Economic Index
 ```
+
+### URL State Persistence
+
+Selected indicators, date range, and display mode are synced to URL search params:
+```
+?indicators=gdp,unemployment&start=2020-01-01&end=2024-01-01&mode=value
+```
+This enables shareable links. State is read from URL on mount and debounced (500ms) when writing.
+
+### Resilient Fetching
+
+Uses `Promise.allSettled()` so individual indicator fetch failures don't block others:
+- `loadingIds: Set<string>` — tracks per-indicator loading state
+- `fetchErrors: Map<string, string>` — tracks per-indicator error messages
+- Failed indicators show error badge in IndicatorSelector
 
 ### API Key Security
 
@@ -225,17 +260,36 @@ Edit `src/lib/indicators.ts`:
 
 ### Change chart colors
 
-Edit the `CHART_COLORS` array in `src/components/Dashboard.tsx` (line 19).
+Edit the `CHART_COLORS` array in `src/lib/constants.ts`.
 
 ### Modify stats calculation
 
-Edit `calculateStats()` in `src/components/Dashboard.tsx` (line 132).
+Edit `calculateStats()` in `src/components/Dashboard.tsx`.
 
 ### Adjust date range defaults
 
-Edit the `dateRange` initial state in `Dashboard.tsx` (line 172).
+Edit the `dateRange` initial state in `Dashboard.tsx`.
 
 ## Tech Notes
+
+### React Compiler
+
+This project uses `babel-plugin-react-compiler` for automatic memoization. Enabled in `next.config.ts`:
+```typescript
+const config = {
+  experimental: {
+    reactCompiler: true,
+  },
+};
+```
+No need for manual `useMemo`/`useCallback` — the compiler handles it.
+
+### SWR
+
+Data fetching uses SWR for deduplication and caching:
+```typescript
+useSWR(key, fetcher, { revalidateOnFocus: false });
+```
 
 ### shadcn/ui v4 (Base UI)
 
@@ -246,28 +300,20 @@ This project uses shadcn/ui v4 which is built on `@base-ui/react`, NOT Radix UI.
 
 ### Recharts
 
-- Always wrap in `<ResponsiveContainer width="100%" height={N}>`
+- Always wrap in `<ResponsiveContainer width="100%" height="100%">`
+- Responsive heights: `h-[300px] sm:h-[350px] lg:h-[400px]`
 - Use `type="monotone"` for smooth curves
 - `dot={false}` by default, `activeDot` for hover
 - Custom tooltip via `content={<CustomTooltip />}` prop
 
-### Fetch Pattern
-
-Client components use `fetch()` to call internal API routes:
-```typescript
-const response = await fetch(`/api/fred?series_id=GDP&start_date=2020-01-01`);
-const data = await response.json();
-// data.observations = [{ date, value }, ...]
-```
-
 ### Testing
 
 ```bash
-npm test           # Run all tests (Vitest)
+npm test           # Run all tests (Vitest, 32 tests)
 npx vitest         # Run tests in watch mode
 ```
 
-Test files in `src/__tests__/` cover: i18n translations, indicator structure, `processDataForChart()`, `calculateStats()`.
+Test files in `src/__tests__/` cover: i18n translations (6 tests), indicator structure (10 tests), `processDataForChart()` (8 tests), `calculateStats()` (8 tests).
 
 ## Environment Variables
 

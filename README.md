@@ -1,6 +1,6 @@
 # Economix — Economic Data Dashboard
 
-A modern, dark-themed dashboard for visualizing macroeconomic data from **FRED** and **DBnomics** APIs. Built with Next.js App Router, TypeScript, Tailwind CSS, and Recharts. Supports **繁中/English** language switching.
+A modern dashboard for visualizing macroeconomic data from **FRED** and **DBnomics** APIs. Built with Next.js App Router, TypeScript, Tailwind CSS, Recharts, and React Compiler. Supports **繁中/English** language switching and dark/light themes.
 
 ---
 
@@ -45,16 +45,21 @@ open http://localhost:3000
 ## Features
 
 - **Multi-indicator comparison** — Select one or more indicators to overlay on the same chart
-- **5 countries + global commodities** — US, Euro Area, Japan, China, UK + WTI Oil, Gold, Sugar, Natural Gas
-- **Country-specific grouping** — Indicators organized by country and global commodities
-- **Searchable indicator picker** — Filter by name, category, or description
+- **10 countries + global** — US, Euro Area, Japan, China, UK, India, Brazil, South Korea, Canada, Australia + global commodities & recession risk
+- **Country-specific grouping** — Indicators organized by country and global categories
+- **Searchable indicator picker** — Filter by name, category, or description with per-indicator loading/error states
 - **Date range control** — Custom date pickers + quick presets (1Y, 5Y, 10Y, All)
 - **4 display modes** — Raw value, value change, percentage, percentage change
 - **Interactive tooltips** — Hover over chart lines to see exact values
 - **Stats cards** — Current value, change %, and trend arrows at a glance
 - **i18n support** — Switch between 繁中 and English with one click
-- **Dark theme** — Easy on the eyes for extended analysis sessions
-- **Responsive** — Works on desktop and tablet
+- **Dark/light theme** — Toggle between themes, persisted to localStorage
+- **Export to CSV** — One-click download of chart data
+- **URL state persistence** — Shareable links with selected indicators, dates, and display mode
+- **Recession risk indicators** — Yield curve (10Y-2Y, 10Y-3M) and Leading Economic Index
+- **Resilient fetching** — Promise.allSettled with per-indicator error handling
+- **React Compiler** — Automatic memoization via babel-plugin-react-compiler
+- **Responsive** — Works on desktop, tablet, and mobile
 
 ---
 
@@ -67,8 +72,11 @@ open http://localhost:3000
 | UI | Tailwind CSS 4 + shadcn/ui (Base UI) |
 | Charts | Recharts 3 |
 | Icons | Lucide React |
+| State | SWR + React hooks |
 | i18n | React Context + localStorage |
+| Theme | React Context + localStorage |
 | Testing | Vitest |
+| Compiler | React Compiler (babel-plugin-react-compiler) |
 | Data Sources | FRED API, DBnomics API |
 
 ---
@@ -82,23 +90,27 @@ economix/
 │   │   ├── api/
 │   │   │   ├── fred/route.ts         # FRED API proxy
 │   │   │   └── dbnomics/route.ts     # DBnomics API proxy
-│   │   ├── layout.tsx                # Root layout (dark theme)
+│   │   ├── layout.tsx                # Root layout (theme)
 │   │   ├── page.tsx                  # Entry point → Dashboard
 │   │   └── globals.css               # Tailwind + shadcn tokens
 │   ├── components/
-│   │   ├── Dashboard.tsx             # Main orchestrator (state, data fetching)
-│   │   ├── IndicatorSelector.tsx     # Searchable multi-select popover
+│   │   ├── Dashboard.tsx             # Main orchestrator (SWR, URL state, Promise.allSettled)
+│   │   ├── IndicatorSelector.tsx     # Searchable multi-select with loading/error UI
 │   │   ├── DatePickerRange.tsx       # Date range + quick presets
 │   │   ├── ValueModeSelector.tsx     # Value/Change/%/% Change toggle
-│   │   ├── DataChart.tsx             # Recharts LineChart wrapper
+│   │   ├── DataChart.tsx             # Recharts LineChart (responsive height)
 │   │   ├── StatsCards.tsx            # Stats display cards
-│   │   ├── LanguageSwitcher.tsx      # 繁中/EN toggle button
+│   │   ├── LanguageSwitcher.tsx      # 繁中/EN toggle
+│   │   ├── ThemeToggle.tsx           # Dark/light theme toggle
+│   │   ├── ExportButton.tsx          # CSV export
 │   │   ├── Providers.tsx             # Client-side context providers
 │   │   └── ui/                       # shadcn/ui primitives
 │   ├── lib/
-│   │   ├── indicators.ts             # Indicator definitions (29 indicators)
+│   │   ├── indicators.ts             # Indicator definitions (52 indicators)
 │   │   ├── i18n.ts                   # Translation dictionaries (en/zh-TW)
 │   │   ├── LocaleContext.tsx          # React Context for locale state
+│   │   ├── ThemeContext.tsx           # React Context for theme state
+│   │   ├── constants.ts              # Shared constants (CHART_COLORS)
 │   │   └── utils.ts                  # cn() helper
 │   ├── types/
 │   │   └── index.ts                  # TypeScript interfaces
@@ -144,7 +156,7 @@ FRED_API_KEY=your_api_key_here
 
 ## Available Indicators
 
-### United States (FRED)
+### United States (FRED) — 12 indicators
 
 | ID | Name | Series ID | Unit | Category |
 |----|------|-----------|------|----------|
@@ -161,7 +173,7 @@ FRED_API_KEY=your_api_key_here
 | `trade_balance` | Trade Balance | BOPGSTB | Millions of $ | Trade |
 | `retail_sales` | Retail Sales | RSAFS | Millions of $ | Consumption |
 
-### Euro Area (FRED)
+### Euro Area (FRED) — 4 indicators
 
 | ID | Name | Series ID | Unit | Category |
 |----|------|-----------|------|----------|
@@ -170,7 +182,7 @@ FRED_API_KEY=your_api_key_here
 | `eu_hicp` | HICP | CP0000EZ19M086NEST | Index 2025=100 | Prices |
 | `eu_ecb_rate` | ECB Main Refinancing Rate | ECBMRRFR | % | Interest Rates |
 
-### Japan (FRED)
+### Japan (FRED) — 4 indicators
 
 | ID | Name | Series ID | Unit | Category |
 |----|------|-----------|------|----------|
@@ -179,7 +191,7 @@ FRED_API_KEY=your_api_key_here
 | `jp_cpi` | CPI | CPALTT01JPM659N | Index 2015=100 | Prices |
 | `jp_boj_rate` | BOJ Policy Rate | IRSTCI01JPM156N | % | Interest Rates |
 
-### China (FRED)
+### China (FRED) — 3 indicators
 
 | ID | Name | Series ID | Unit | Category |
 |----|------|-----------|------|----------|
@@ -187,7 +199,7 @@ FRED_API_KEY=your_api_key_here
 | `cn_cpi` | CPI | CPALTT01CNM659N | Index 2015=100 | Prices |
 | `cn_interest_rate` | Interest Rate | INTDSRCNM193N | % per Annum | Interest Rates |
 
-### United Kingdom (FRED)
+### United Kingdom (FRED) — 4 indicators
 
 | ID | Name | Series ID | Unit | Category |
 |----|------|-----------|------|----------|
@@ -196,7 +208,57 @@ FRED_API_KEY=your_api_key_here
 | `uk_cpi` | CPI | GBRCPIALLMINMEI | Index 2015=100 | Prices |
 | `uk_boe_rate` | BOE Bank Rate | BOERUKM | % per Annum | Interest Rates |
 
-### Global / Commodities (DBnomics)
+### India (FRED) — 3 indicators
+
+| ID | Name | Series ID | Unit | Category |
+|----|------|-----------|------|----------|
+| `in_gdp` | GDP | MKTGDPIA646NWDB | Current US Dollars | National Accounts |
+| `in_cpi` | CPI | CPALTT01INM659N | Index 2015=100 | Prices |
+| `in_interest_rate` | Interest Rate | INTDSRINM193N | % per Annum | Interest Rates |
+
+### Brazil (FRED) — 3 indicators
+
+| ID | Name | Series ID | Unit | Category |
+|----|------|-----------|------|----------|
+| `br_gdp` | GDP | MKTGDPBRA646NWDB | Current US Dollars | National Accounts |
+| `br_cpi` | CPI | CPALTT01BRM659N | Index 2015=100 | Prices |
+| `br_interest_rate` | Interest Rate | INTDSRBRM193N | % per Annum | Interest Rates |
+
+### South Korea (FRED) — 3 indicators
+
+| ID | Name | Series ID | Unit | Category |
+|----|------|-----------|------|----------|
+| `kr_gdp` | GDP | MKTGDPKR646NWDB | Current US Dollars | National Accounts |
+| `kr_cpi` | CPI | CPALTT01KRM659N | Index 2015=100 | Prices |
+| `kr_interest_rate` | Interest Rate | INTDSRKR193N | % per Annum | Interest Rates |
+
+### Canada (FRED) — 4 indicators
+
+| ID | Name | Series ID | Unit | Category |
+|----|------|-----------|------|----------|
+| `ca_gdp` | GDP | NGDPRDPCNADGP | Current US Dollars | National Accounts |
+| `ca_unemployment` | Unemployment Rate | LRHUTTTTCAM156S | % | Labor |
+| `ca_cpi` | CPI | CPALTT01CAM659N | Index 2015=100 | Prices |
+| `ca_interest_rate` | Interest Rate | INTDSRCAM193N | % per Annum | Interest Rates |
+
+### Australia (FRED) — 4 indicators
+
+| ID | Name | Series ID | Unit | Category |
+|----|------|-----------|------|----------|
+| `au_gdp` | GDP | MKTGDPAU646NWDB | Current US Dollars | National Accounts |
+| `au_unemployment` | Unemployment Rate | LRHUTTTTAIM156S | % | Labor |
+| `au_cpi` | CPI | CPALTT01AIM659N | Index 2015=100 | Prices |
+| `au_interest_rate` | Interest Rate | INTDSRAIM193N | % per Annum | Interest Rates |
+
+### Recession Risk / Forecast (FRED) — 3 indicators
+
+| ID | Name | Series ID | Unit | Category |
+|----|------|-----------|------|----------|
+| `yield_curve_10y2y` | Yield Curve (10Y-2Y) | T10Y2Y | % | Recession Risk |
+| `yield_curve_10y3m` | Yield Curve (10Y-3M) | T10Y3M | % | Recession Risk |
+| `leading_index` | Leading Economic Index | USSLIND | Index 2016=100 | Recession Risk |
+
+### Global / Commodities (DBnomics) — 4 indicators
 
 | ID | Name | Dataset | Provider | Unit | Category |
 |----|------|---------|----------|------|----------|
@@ -221,7 +283,7 @@ FRED_API_KEY=your_api_key_here
 │         └──────────────────┼──────────────────┘          │
 │                            │                             │
 │                    ┌───────▼───────┐                     │
-│                    │   Dashboard   │  (state management) │
+│                    │   Dashboard   │  (SWR, URL state)   │
 │                    │   (React)     │                     │
 │                    └───────┬───────┘                     │
 │                            │                             │
@@ -253,14 +315,13 @@ FRED_API_KEY=your_api_key_here
 
 ### Data Flow
 
-1. User selects indicators → `Dashboard` updates `selectedIds` state
-2. `useEffect` triggers `fetchData(selectedIds)` when selection or date range changes
-3. `fetchData` makes parallel `fetch()` calls to `/api/fred` or `/api/dbnomics`
-4. API routes proxy requests to external APIs, hiding API keys from the client
-5. Response data is stored in `allData` state as `TimeSeriesData[]`
-6. `processDataForChart()` transforms data based on selected `ValueMode`
-7. `calculateStats()` computes current values, changes, and percentages
-8. `DataChart` and `StatsCards` render the processed data
+1. User selects indicators → `Dashboard` updates `selectedIds` state + syncs to URL
+2. `useSWR` triggers `fetchData()` when selection or date range changes
+3. `fetchData` uses `Promise.allSettled()` for parallel fetches — individual failures don't block others
+4. Per-indicator `loadingIds` and `fetchErrors` state for granular UI feedback
+5. API routes proxy requests to external APIs, hiding API keys from the client
+6. `useMemo` computes `chartData` and `stats` only when dependencies change
+7. `DataChart` and `StatsCards` render the processed data
 
 ---
 
@@ -322,24 +383,24 @@ Proxies requests to the DBnomics API.
 
 ### `Dashboard.tsx`
 
-The main orchestrator. Manages all state:
-- `selectedIds: string[]` — Which indicators are selected
-- `valueMode: ValueMode` — How to display values
-- `dateRange: DateRange` — Start and end dates
-- `allData: TimeSeriesData[]` — Fetched data from APIs
-- `isLoading: boolean` — Loading state
-- `error: string | null` — Error message
+The main orchestrator. Manages state via SWR and URL persistence:
+- `selectedIds: string[]` — Which indicators are selected (synced to URL)
+- `valueMode: ValueMode` — How to display values (synced to URL)
+- `dateRange: DateRange` — Start and end dates (synced to URL)
+- `allData: TimeSeriesData[]` — Fetched data via Promise.allSettled
+- `loadingIds: Set<string>` — Per-indicator loading state
+- `fetchErrors: Map<string, string>` — Per-indicator error messages
 
 Exports `processDataForChart()` and `calculateStats()` for testing.
 
 ### `IndicatorSelector.tsx`
 
-A popover with a searchable list of indicators grouped by country and global commodities. Supports:
+A popover with a searchable list of indicators grouped by country and global categories. Supports:
 - Multi-select with badge chips
 - Click badges to remove
 - Search by name, category, or description
-- Shows source (FRED/DBN) and category for each indicator
-- Grouped layout: Country-specific → country → indicators, Global → commodities
+- Per-indicator loading spinner and error badge
+- Grouped layout: Country-specific → country → indicators, Global → category → indicators
 
 ### `DatePickerRange.tsx`
 
@@ -362,9 +423,10 @@ A segmented control with 4 display modes:
 
 A Recharts `LineChart` wrapper with:
 - Responsive container (fills parent width)
-- Custom dark-themed tooltip
-- Color-coded lines per indicator
-- Grid lines matching the dark theme
+- Responsive height: `h-[300px] sm:h-[350px] lg:h-[400px]`
+- Custom dark/light themed tooltip
+- Color-coded lines per indicator (shared CHART_COLORS)
+- Grid lines matching the theme
 
 ### `StatsCards.tsx`
 
@@ -377,6 +439,14 @@ A grid of stat cards showing for each indicator:
 
 A toggle button in the header that switches between 繁中 and English. Locale is persisted to localStorage.
 
+### `ThemeToggle.tsx`
+
+A toggle button that switches between dark and light themes. Theme is persisted to localStorage and applied via CSS class on `<html>`.
+
+### `ExportButton.tsx`
+
+A button that exports the current chart data to CSV format. Downloads as `economix-YYYY-MM-DD.csv`.
+
 ---
 
 ## Internationalization
@@ -387,7 +457,7 @@ The app supports two locales:
 
 ### How it works
 
-- `src/lib/i18n.ts` — Translation dictionary with ~40 keys
+- `src/lib/i18n.ts` — Translation dictionary with 50 keys
 - `src/lib/LocaleContext.tsx` — React Context providing `locale`, `t()`, `setLocale()`
 - `src/components/LanguageSwitcher.tsx` — Toggle button in header
 - Locale is persisted to `localStorage("economix-locale")`
@@ -423,7 +493,7 @@ The app supports two locales:
   category: "nationalAccounts",
   description: "Description text",
   categoryType: "country",
-  country: "US",  // or "EuroArea", "Japan", "China", "UK"
+  country: "US",  // or "EuroArea", "Japan", "China", "UK", "India", "Brazil", "SouthKorea", "Canada", "Australia"
 }
 ```
 
@@ -466,8 +536,8 @@ npx vitest
 
 | File | Coverage |
 |------|----------|
-| `src/__tests__/i18n.test.ts` | Translation key parity, `t()` correctness |
-| `src/__tests__/indicators.test.ts` | Indicator structure, required fields, unique IDs |
+| `src/__tests__/i18n.test.ts` | Translation key parity, `t()` correctness, new countries |
+| `src/__tests__/indicators.test.ts` | Indicator structure, 10 countries, recession risk, 40+ total |
 | `src/__tests__/chart-data.test.ts` | `processDataForChart()` — merge, sort, value modes |
 | `src/__tests__/stats.test.ts` | `calculateStats()` — change, percentages, min/max |
 

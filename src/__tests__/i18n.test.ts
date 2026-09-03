@@ -32,10 +32,25 @@ describe("i18n translations", () => {
     expect(t("zh-TW", "appTitle")).toBe("經濟指標");
   });
 
-  it("should translate country names correctly", () => {
+  it("should translate all country names correctly", () => {
     expect(t("en", "country_US")).toBe("United States");
     expect(t("zh-TW", "country_US")).toBe("美國");
     expect(t("en", "country_Japan")).toBe("Japan");
     expect(t("zh-TW", "country_Japan")).toBe("日本");
+    expect(t("en", "country_India")).toBe("India");
+    expect(t("zh-TW", "country_India")).toBe("印度");
+    expect(t("en", "country_Brazil")).toBe("Brazil");
+    expect(t("zh-TW", "country_Brazil")).toBe("巴西");
+    expect(t("en", "country_SouthKorea")).toBe("South Korea");
+    expect(t("zh-TW", "country_SouthKorea")).toBe("南韓");
+    expect(t("en", "country_Canada")).toBe("Canada");
+    expect(t("zh-TW", "country_Canada")).toBe("加拿大");
+    expect(t("en", "country_Australia")).toBe("Australia");
+    expect(t("zh-TW", "country_Australia")).toBe("澳洲");
+  });
+
+  it("should translate recessionRisk category correctly", () => {
+    expect(t("en", "recessionRisk")).toBe("Recession Risk");
+    expect(t("zh-TW", "recessionRisk")).toBe("衰退風險");
   });
 });
