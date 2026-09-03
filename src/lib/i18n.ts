@@ -53,7 +53,10 @@ export type TranslationKey =
   | "trade"
   | "consumption"
   | "commodities"
-  | "recessionRisk";
+  | "recessionRisk"
+  // USD conversion
+  | "convertToUSD"
+  | "convertToUSDDescription";
 
 export const translations: Record<Locale, Record<TranslationKey, string>> = {
   en: {
@@ -100,6 +103,9 @@ export const translations: Record<Locale, Record<TranslationKey, string>> = {
     changeDescription: "Change from previous data point",
     percentDescription: "Percentage change from previous data point",
     percentChangeDescription: "Cumulative net change from start of period",
+    convertToUSD: "Convert to USD",
+    convertToUSDDescription:
+      "Convert non-USD values to US Dollars using exchange rates",
   },
   "zh-TW": {
     appTitle: "經濟指標",
@@ -145,6 +151,8 @@ export const translations: Record<Locale, Record<TranslationKey, string>> = {
     changeDescription: "較前一筆資料的變動",
     percentDescription: "較前一筆資料的百分比變動",
     percentChangeDescription: "自期間起始以來的累計淨變動",
+    convertToUSD: "轉換為美元",
+    convertToUSDDescription: "使用匯率將非美元數值轉換為美元",
   },
 };
 

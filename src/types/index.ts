@@ -35,6 +35,10 @@ export interface Indicator {
   categoryType: "country" | "global";
   /** Country name key (e.g. "US", "EuroArea", "Japan", "China", "UK") — undefined for global */
   country?: string;
+  /** Currency code for non-USD indicators (e.g. "EUR", "JPY", "GBP") — enables USD conversion */
+  currency?: string;
+  /** FRED series ID for exchange rate (e.g. "DEXUSEU" for EUR/USD) — used with currency */
+  exchangeRateSeriesId?: string;
 }
 
 /** A single data point from the API (date + value pair) */

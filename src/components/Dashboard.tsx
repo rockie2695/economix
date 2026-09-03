@@ -10,6 +10,7 @@ import { DataChart } from "./DataChart";
 import { StatsCards } from "./StatsCards";
 import { LanguageSwitcher } from "./LanguageSwitcher";
 import { ExportButton } from "./ExportButton";
+import { USDConvertToggle } from "./USDConvertToggle";
 import { indicators } from "@/lib/indicators";
 import { CHART_COLORS } from "@/lib/constants";
 import { useLocale } from "@/lib/LocaleContext";
@@ -166,6 +167,7 @@ function readStateFromURL() {
   const mode = params.get("mode") as ValueMode | null;
   const start = params.get("start");
   const end = params.get("end");
+  const usd = params.get("usd") === "1";
 
   return {
     selectedIds: ids,
@@ -174,6 +176,7 @@ function readStateFromURL() {
       : null) as ValueMode | null,
     dateRange:
       start && end ? { startDate: start, endDate: end } : null,
+    convertToUSD: usd,
   };
 }
 
@@ -193,6 +196,7 @@ export function Dashboard() {
     new Map()
   );
   const [loadingIds, setLoadingIds] = React.useState<Set<string>>(new Set());
+  const [convertToUSD, setConvertToUSD] = React.useState(false);
 
   // Read from URL on mount
   React.useEffect(() => {
@@ -201,6 +205,7 @@ export function Dashboard() {
       if (urlState.selectedIds.length > 0) setSelectedIds(urlState.selectedIds);
       if (urlState.valueMode) setValueMode(urlState.valueMode);
       if (urlState.dateRange) setDateRange(urlState.dateRange);
+      if (urlState.convertToUSD) setConvertToUSD(urlState.convertToUSD);
     }
     setMounted(true);
   }, []);
@@ -215,6 +220,7 @@ export function Dashboard() {
       params.set("mode", valueMode);
       params.set("start", dateRange.startDate);
       params.set("end", dateRange.endDate);
+      if (convertToUSD) params.set("usd", "1");
       const qs = params.toString();
       window.history.replaceState(
         null,
@@ -223,7 +229,7 @@ export function Dashboard() {
       );
     }, 500);
     return () => clearTimeout(timer);
-  }, [selectedIds, valueMode, dateRange, mounted]);
+  }, [selectedIds, valueMode, dateRange, convertToUSD, mounted]);
 
   // SWR fetcher
   const fetcher = React.useCallback(
@@ -253,25 +259,94 @@ export function Dashboard() {
     }
   );
 
-  const chartData = React.useMemo(
-    () => processDataForChart(allData, valueMode),
-    [allData, valueMode]
+  // Fetch exchange rates for USD conversion
+  const exchangeRateSeriesIds = React.useMemo(() => {
+    if (!convertToUSD) return [];
+    const ids = new Set<string>();
+    selectedIds.forEach((id) => {
+      const indicator = indicators.find((i) => i.id === id);
+      if (indicator?.exchangeRateSeriesId) {
+        ids.add(indicator.exchangeRateSeriesId);
+      }
+    });
+    return Array.from(ids);
+  }, [selectedIds, convertToUSD]);
+
+  const exchangeRateKey =
+    exchangeRateSeriesIds.length > 0
+      ? `exchange-rates-${exchangeRateSeriesIds.join(",")}`
+      : null;
+
+  const { data: exchangeRates } = useSWR<Record<string, number>>(
+    exchangeRateKey,
+    async () => {
+      if (!exchangeRateSeriesIds.length) return {};
+      const params = new URLSearchParams({
+        series_ids: exchangeRateSeriesIds.join(","),
+      });
+      const response = await fetch(`/api/exchange-rate?${params.toString()}`);
+      if (!response.ok) return {};
+      const result = await response.json();
+      return result.rates || {};
+    },
+    {
+      revalidateOnFocus: false,
+      dedupingInterval: 3600000, // 1 hour cache
+    }
   );
 
-  const stats = React.useMemo(() => calculateStats(allData), [allData]);
+  // Convert data to USD when enabled
+  const convertedData = React.useMemo(() => {
+    if (!convertToUSD || !exchangeRates || Object.keys(exchangeRates).length === 0) {
+      return allData;
+    }
+
+    return allData.map((series) => {
+      const indicator = indicators.find((i) => i.id === series.indicatorId);
+      if (!indicator?.exchangeRateSeriesId || !indicator.currency) {
+        return series; // Already USD or no conversion needed
+      }
+
+      const rate = exchangeRates[indicator.exchangeRateSeriesId];
+      if (!rate || rate === 0) return series;
+
+      return {
+        ...series,
+        unit: `USD (${indicator.currency})`,
+        data: series.data.map((point) => ({
+          ...point,
+          value: point.value / rate,
+        })),
+      };
+    });
+  }, [allData, convertToUSD, exchangeRates]);
+
+  const chartData = React.useMemo(
+    () => processDataForChart(convertedData, valueMode),
+    [convertedData, valueMode]
+  );
+
+  const stats = React.useMemo(() => calculateStats(convertedData), [convertedData]);
 
   const selectedIndicators = React.useMemo(
     () =>
-      indicators
-        .filter((i) => selectedIds.includes(i.id))
-        .map((ind, index) => ({
-          id: ind.id,
-          name: ind.country
-            ? `${ind.name} (${t(`country_${ind.country}`)})`
-            : ind.name,
-          color: CHART_COLORS[index % CHART_COLORS.length],
-        })),
-    [selectedIds, t]
+      convertedData
+        .filter((i) => selectedIds.includes(i.indicatorId))
+        .map((series, index) => {
+          const indicator = indicators.find((i) => i.id === series.indicatorId);
+          const baseName = indicator?.country
+            ? `${indicator.name} (${t(`country_${indicator.country}`)})`
+            : indicator?.name || series.indicatorName;
+          const displayName = convertToUSD && series.unit.startsWith("USD")
+            ? `${baseName} (USD)`
+            : baseName;
+          return {
+            id: series.indicatorId,
+            name: displayName,
+            color: CHART_COLORS[index % CHART_COLORS.length],
+          };
+        }),
+    [selectedIds, convertedData, convertToUSD, t]
   );
 
   const dismissError = (id: string) => {
@@ -296,6 +371,14 @@ export function Dashboard() {
             <span className="text-sm text-muted-foreground">
               {t("dataSource")}
             </span>
+            <USDConvertToggle
+              enabled={convertToUSD}
+              onToggle={() => setConvertToUSD(!convertToUSD)}
+              visible={selectedIds.some((id) => {
+                const ind = indicators.find((i) => i.id === id);
+                return ind?.currency;
+              })}
+            />
             <ExportButton data={chartData} indicators={selectedIndicators} />
             <LanguageSwitcher />
           </div>

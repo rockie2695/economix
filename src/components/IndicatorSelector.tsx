@@ -131,12 +131,15 @@ export function IndicatorSelector({
                   key={ind.id}
                   variant="secondary"
                   className="mr-1"
+                  title={`${t(ind.category)}${ind.unit ? ` · ${ind.unit}` : ""}`}
                   onClick={(e) => {
                     e.stopPropagation();
                     removeIndicator(ind.id);
                   }}
                 >
-                  {ind.name}
+                  {ind.country
+                    ? `${t(`country_${ind.country}`)} · ${ind.name}`
+                    : ind.name}
                   <X className="ml-1 h-3 w-3 cursor-pointer" />
                 </Badge>
               ))

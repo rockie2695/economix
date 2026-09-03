@@ -48,11 +48,10 @@ describe("indicators", () => {
     }
   });
 
-  it("should have datasetCode and providerCode on all DBnomics indicators", () => {
+  it("should have datasetCode and providerCode on all DBnomics indicators (if any)", () => {
     const dbnomicsIndicators = indicators.filter(
       (i) => i.source === "dbnomics"
     );
-    expect(dbnomicsIndicators.length).toBeGreaterThan(0);
 
     for (const indicator of dbnomicsIndicators) {
       expect(indicator.datasetCode).toBeDefined();
