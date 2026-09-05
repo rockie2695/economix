@@ -148,7 +148,7 @@ describe("processDataForChart", () => {
     // First date only has gdp
     expect(result[0].date).toBe("2020-01-01");
     expect(result[0].gdp).toBe(100);
-    expect(result[0].unemployment).toBeUndefined();
+    expect(result[0].unemployment).toBeNull();
 
     // Middle date has both
     expect(result[1].date).toBe("2020-04-01");
@@ -157,7 +157,7 @@ describe("processDataForChart", () => {
 
     // Last date only has unemployment
     expect(result[2].date).toBe("2020-07-01");
-    expect(result[2].gdp).toBeUndefined();
+    expect(result[2].gdp).toBeNull();
     expect(result[2].unemployment).toBe(10.2);
   });
 });

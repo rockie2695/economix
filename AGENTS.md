@@ -12,7 +12,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 ## Project Overview
 
-Economix is a macroeconomic data visualization dashboard. It fetches data from FRED and DBnomics APIs, displays time-series charts, and computes basic statistics. Supports 繁中/English language switching and dark/light themes.
+Economix is a macroeconomic data visualization dashboard. It fetches data from FRED, DBnomics, and World Bank APIs, displays time-series charts, and computes basic statistics. Supports 繁中/English language switching and dark/light themes.
 
 **Stack**: Next.js 16 (App Router), TypeScript, Tailwind CSS 4, shadcn/ui (Base UI), Recharts 3, React Compiler
 
@@ -23,7 +23,9 @@ src/
 ├── app/
 │   ├── api/
 │   │   ├── fred/route.ts         # FRED API proxy (server-side, hides API key)
-│   │   └── dbnomics/route.ts     # DBnomics API proxy (server-side)
+│   │   ├── dbnomics/route.ts     # DBnomics API proxy (server-side)
+│   │   ├── worldbank/route.ts    # World Bank API proxy (server-side)
+│   │   └── exchange-rate/route.ts # Exchange rate API (server-side)
 │   ├── layout.tsx                # Root layout, Geist font
 │   ├── page.tsx                  # Entry → renders <Dashboard />
 │   └── globals.css               # Tailwind imports + shadcn CSS variables
@@ -62,7 +64,7 @@ src/
 interface Indicator {
   id: string;              // unique key, e.g. "gdp"
   name: string;            // display name, e.g. "GDP"
-  source: "fred" | "dbnomics";
+  source: "fred" | "dbnomics" | "worldbank";
   seriesId?: string;       // FRED series ID
   datasetCode?: string;    // DBnomics dataset code
   providerCode?: string;   // DBnomics provider code
@@ -124,7 +126,7 @@ interface StatsData {
 User selects indicators
   → Dashboard.selectedIds updates (synced to URL params)
   → useSWR triggers fetchData(selectedIds)
-  → Promise.allSettled for parallel fetch to /api/fred or /api/dbnomics
+  → Promise.allSettled for parallel fetch to /api/fred, /api/dbnomics, or /api/worldbank
   → API routes proxy to external APIs (hides keys)
   → Per-indicator loadingIds and fetchErrors state updated
   → useMemo computes chartData and stats
@@ -243,6 +245,24 @@ Edit `src/lib/indicators.ts`:
   category: "commodities",
   description: "Description",
   categoryType: "global",
+}
+```
+
+### Add a new World Bank indicator
+
+Edit `src/lib/indicators.ts`:
+```typescript
+{
+  id: "new_worldbank_indicator",
+  name: "New World Bank Indicator",
+  source: "worldbank",
+  seriesId: "INDICATOR_CODE",
+  countryCode: "US",
+  unit: "Units",
+  category: "nationalAccounts",
+  description: "Description",
+  categoryType: "country",
+  country: "US",
 }
 ```
 

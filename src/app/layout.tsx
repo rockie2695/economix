@@ -16,7 +16,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Economix - Economic Data Dashboard",
   description:
-    "Real-time economic data from FRED & DBnomics. GDP, unemployment, CPI, commodities and more.",
+    "Real-time economic data from FRED, DBnomics & World Bank. GDP, unemployment, CPI, commodities and more.",
 };
 
 export default function RootLayout({

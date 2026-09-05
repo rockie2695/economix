@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { Loader2, AlertTriangle, X } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import useSWR from "swr";
 import { IndicatorSelector } from "./IndicatorSelector";
 import { DatePickerRange } from "./DatePickerRange";
@@ -63,14 +64,26 @@ export function processDataForChart(
         dateMap.set(point.date, {
           date: point.date,
           [series.indicatorId]: displayValue,
-        });
+        } as ChartDataPoint);
       }
     });
   });
 
-  return Array.from(dateMap.values()).sort((a, b) =>
-    (a.date as string).localeCompare(b.date as string)
-  );
+  const allIndicatorIds = allData.map((s) => s.indicatorId);
+
+  return Array.from(dateMap.values())
+    .map((entry) => {
+      const fixedEntry = { ...entry };
+      allIndicatorIds.forEach((id) => {
+        if (!(id in fixedEntry)) {
+          fixedEntry[id] = null;
+        }
+      });
+      return fixedEntry as ChartDataPoint;
+    })
+    .sort((a, b) =>
+      (a.date as string).localeCompare(b.date as string)
+    );
 }
 
 export function calculateStats(allData: TimeSeriesData[]) {
@@ -84,6 +97,19 @@ export function calculateStats(allData: TimeSeriesData[]) {
         ? (change / previousValue) * 100
         : 0;
 
+    // Get country/category key from the indicator definition
+    const indicator = indicators.find((i) => i.id === series.indicatorId);
+    let countryOrCategoryKey = "";
+    if (indicator) {
+      if (indicator.categoryType === "country") {
+        countryOrCategoryKey = indicator.country
+          ? `country_${indicator.country}`
+          : "country_Other";
+      } else {
+        countryOrCategoryKey = indicator.category;
+      }
+    }
+
     return {
       indicatorId: series.indicatorId,
       indicatorName: series.indicatorName,
@@ -94,8 +120,36 @@ export function calculateStats(allData: TimeSeriesData[]) {
       min: Math.min(...values),
       max: Math.max(...values),
       unit: series.unit,
+      countryOrCategoryKey,
     };
   });
+}
+
+// Scale factors for FRED indicators to convert raw API values to display values.
+// After simplifying unit strings (e.g. "Billions of Dollars" → "Dollars"),
+// we need to multiply the raw values by the appropriate factor for correct display.
+function getScaleFactor(unit: string, indicatorId: string): number {
+  switch (unit) {
+    case "Dollars":
+      // trade_balance and retail_sales were "Millions of Dollars"
+      if (indicatorId === "trade_balance" || indicatorId === "retail_sales") {
+        return 1e6;
+      }
+      // All other "Dollars" indicators were "Billions of Dollars"
+      return 1e9;
+    case "Euros":
+      return 1e6; // was "Millions of Chained 2010 Euros"
+    case "Yen":
+      return 1e9; // was "Billions of Chained 2015 Yen"
+    case "Pounds":
+      return 1e6; // was "Millions of Pounds"
+    case "Domestic Currency":
+      return 1e6; // was "Millions of Domestic Currency"
+    case "Thousands of Units":
+      return 1e3; // was "Thousands of Units"
+    default:
+      return 1;
+  }
 }
 
 async function fetchEconomicData(
@@ -116,7 +170,7 @@ async function fetchEconomicData(
           end_date: endDate,
         });
         url = `/api/fred?${params.toString()}`;
-      } else {
+      } else if (indicator.source === "dbnomics") {
         const params = new URLSearchParams({
           dataset_code: indicator.datasetCode!,
           provider_code: indicator.providerCode!,
@@ -124,6 +178,16 @@ async function fetchEconomicData(
           end_date: endDate,
         });
         url = `/api/dbnomics?${params.toString()}`;
+      } else if (indicator.source === "worldbank") {
+        // World Bank API - pass indicator ID and country code
+        const params = new URLSearchParams({
+          indicator: indicator.seriesId!,
+          country: indicator.countryCode || "US",
+          date: `${startDate}:${endDate}`,
+        });
+        url = `/api/worldbank?${params.toString()}`;
+      } else {
+        throw new Error(`Unknown source: ${indicator.source}`);
       }
 
       const response = await fetch(url);
@@ -133,11 +197,20 @@ async function fetchEconomicData(
       }
 
       const result = await response.json();
+      const scaleFactor =
+        indicator.source === "fred"
+          ? getScaleFactor(indicator.unit || "", id)
+          : 1;
       return {
         indicatorId: id,
         indicatorName: indicator.name,
         unit: indicator.unit || "",
-        data: result.observations || [],
+        data: result.observations
+          ? result.observations.map((obs: { date: string; value: number }) => ({
+              date: obs.date,
+              value: obs.value * scaleFactor,
+            }))
+          : [],
       } as TimeSeriesData;
     })
   );
@@ -164,6 +237,7 @@ function readStateFromURL() {
   if (typeof window === "undefined") return null;
   const params = new URLSearchParams(window.location.search);
   const ids = params.get("indicators")?.split(",").filter(Boolean) ?? [];
+  const ids2 = params.get("indicators2")?.split(",").filter(Boolean) ?? [];
   const mode = params.get("mode") as ValueMode | null;
   const start = params.get("start");
   const end = params.get("end");
@@ -171,6 +245,7 @@ function readStateFromURL() {
 
   return {
     selectedIds: ids,
+    selectedIds2: ids2,
     valueMode: (mode && ["value", "valueChange", "percentage", "percentageChange"].includes(mode)
       ? mode
       : null) as ValueMode | null,
@@ -185,6 +260,7 @@ export function Dashboard() {
   const [mounted, setMounted] = React.useState(false);
 
   const [selectedIds, setSelectedIds] = React.useState<string[]>([]);
+  const [selectedIds2, setSelectedIds2] = React.useState<string[]>([]);
   const [valueMode, setValueMode] = React.useState<ValueMode>("value");
   const [dateRange, setDateRange] = React.useState<DateRange>({
     startDate: new Date(Date.now() - 365 * 24 * 60 * 60 * 1000)
@@ -203,6 +279,7 @@ export function Dashboard() {
     const urlState = readStateFromURL();
     if (urlState) {
       if (urlState.selectedIds.length > 0) setSelectedIds(urlState.selectedIds);
+      if (urlState.selectedIds2 && urlState.selectedIds2.length > 0) setSelectedIds2(urlState.selectedIds2);
       if (urlState.valueMode) setValueMode(urlState.valueMode);
       if (urlState.dateRange) setDateRange(urlState.dateRange);
       if (urlState.convertToUSD) setConvertToUSD(urlState.convertToUSD);
@@ -217,6 +294,8 @@ export function Dashboard() {
       const params = new URLSearchParams();
       if (selectedIds.length > 0)
         params.set("indicators", selectedIds.join(","));
+      if (selectedIds2.length > 0)
+        params.set("indicators2", selectedIds2.join(","));
       params.set("mode", valueMode);
       params.set("start", dateRange.startDate);
       params.set("end", dateRange.endDate);
@@ -229,7 +308,7 @@ export function Dashboard() {
       );
     }, 500);
     return () => clearTimeout(timer);
-  }, [selectedIds, valueMode, dateRange, convertToUSD, mounted]);
+  }, [selectedIds, selectedIds2, valueMode, dateRange, convertToUSD, mounted]);
 
   // SWR fetcher
   const fetcher = React.useCallback(
@@ -246,13 +325,19 @@ export function Dashboard() {
     []
   );
 
-  const swrKey = mounted && selectedIds.length > 0
-    ? (`economic-data-${selectedIds.join(",")}-${dateRange.startDate}-${dateRange.endDate}` as const)
+  // Merge both sets of selected IDs for a single fetch
+  const allSelectedIds = React.useMemo(
+    () => Array.from(new Set([...selectedIds, ...selectedIds2])),
+    [selectedIds, selectedIds2]
+  );
+
+  const swrKey = mounted && allSelectedIds.length > 0
+    ? (`economic-data-${allSelectedIds.join(",")}-${dateRange.startDate}-${dateRange.endDate}` as const)
     : null;
 
   const { data: allData = [], isLoading } = useSWR<TimeSeriesData[]>(
     swrKey,
-    () => fetcher([selectedIds, dateRange.startDate, dateRange.endDate]),
+    () => fetcher([allSelectedIds, dateRange.startDate, dateRange.endDate]),
     {
       revalidateOnFocus: false,
       dedupingInterval: 60000,
@@ -265,12 +350,26 @@ export function Dashboard() {
     const ids = new Set<string>();
     selectedIds.forEach((id) => {
       const indicator = indicators.find((i) => i.id === id);
+      // FRED indicators with exchange rate series
       if (indicator?.exchangeRateSeriesId) {
         ids.add(indicator.exchangeRateSeriesId);
       }
+      // World Bank indicators (source: dbnomics) - convert EUR to USD
+      if (indicator?.source === "dbnomics" && indicator.currency) {
+        ids.add(indicator.currency);
+      }
+    });
+    selectedIds2.forEach((id) => {
+      const indicator = indicators.find((i) => i.id === id);
+      if (indicator?.exchangeRateSeriesId) {
+        ids.add(indicator.exchangeRateSeriesId);
+      }
+      if (indicator?.source === "dbnomics" && indicator.currency) {
+        ids.add(indicator.currency);
+      }
     });
     return Array.from(ids);
-  }, [selectedIds, convertToUSD]);
+  }, [selectedIds, selectedIds2, convertToUSD]);
 
   const exchangeRateKey =
     exchangeRateSeriesIds.length > 0
@@ -295,7 +394,7 @@ export function Dashboard() {
     }
   );
 
-  // Convert data to USD when enabled
+// Convert data to USD when enabled
   const convertedData = React.useMemo(() => {
     if (!convertToUSD || !exchangeRates || Object.keys(exchangeRates).length === 0) {
       return allData;
@@ -303,21 +402,35 @@ export function Dashboard() {
 
     return allData.map((series) => {
       const indicator = indicators.find((i) => i.id === series.indicatorId);
-      if (!indicator?.exchangeRateSeriesId || !indicator.currency) {
-        return series; // Already USD or no conversion needed
+      // FRED indicators with exchange rate series
+      if (indicator?.exchangeRateSeriesId && indicator.currency) {
+        const rate = exchangeRates[indicator.exchangeRateSeriesId];
+        if (!rate || rate === 0) return series;
+
+        return {
+          ...series,
+          unit: "USD",  // Standardized unit for comparison
+          data: series.data.map((point) => ({
+            ...point,
+            value: point.value / rate,
+          }))
+        };
       }
+      // World Bank indicators (source: dbnomics) - convert EUR to USD
+      if (indicator?.source === "dbnomics" && indicator.currency) {
+        const rate = exchangeRates[indicator.currency];
+        if (!rate || rate === 0) return series;
 
-      const rate = exchangeRates[indicator.exchangeRateSeriesId];
-      if (!rate || rate === 0) return series;
-
-      return {
-        ...series,
-        unit: `USD (${indicator.currency})`,
-        data: series.data.map((point) => ({
-          ...point,
-          value: point.value / rate,
-        })),
-      };
+        return {
+          ...series,
+          unit: "USD",  // Standardized unit for comparison
+          data: series.data.map((point) => ({
+            ...point,
+            value: point.value / rate,
+          }))
+        };
+      }
+      return series; // Already USD or no conversion needed
     });
   }, [allData, convertToUSD, exchangeRates]);
 
@@ -327,6 +440,10 @@ export function Dashboard() {
   );
 
   const stats = React.useMemo(() => calculateStats(convertedData), [convertedData]);
+
+  const stats2 = React.useMemo(() => {
+    return calculateStats(convertedData).filter((s) => selectedIds2.includes(s.indicatorId));
+  }, [convertedData, selectedIds2]);
 
   const selectedIndicators = React.useMemo(
     () =>
@@ -347,6 +464,27 @@ export function Dashboard() {
           };
         }),
     [selectedIds, convertedData, convertToUSD, t]
+  );
+
+  const selectedIndicators2 = React.useMemo(
+    () =>
+      convertedData
+        .filter((i) => selectedIds2.includes(i.indicatorId))
+        .map((series, index) => {
+          const indicator = indicators.find((i) => i.id === series.indicatorId);
+          const baseName = indicator?.country
+            ? `${indicator.name} (${t(`country_${indicator.country}`)})`
+            : indicator?.name || series.indicatorName;
+          const displayName = convertToUSD && series.unit.startsWith("USD")
+            ? `${baseName} (USD)`
+            : baseName;
+          return {
+            id: series.indicatorId,
+            name: displayName,
+            color: CHART_COLORS[(selectedIds.length + index) % CHART_COLORS.length],
+          };
+        }),
+    [selectedIds, selectedIds2, convertedData, convertToUSD, t]
   );
 
   const dismissError = (id: string) => {
@@ -374,7 +512,7 @@ export function Dashboard() {
             <USDConvertToggle
               enabled={convertToUSD}
               onToggle={() => setConvertToUSD(!convertToUSD)}
-              visible={selectedIds.some((id) => {
+              visible={[...selectedIds, ...selectedIds2].some((id) => {
                 const ind = indicators.find((i) => i.id === id);
                 return ind?.currency;
               })}
@@ -387,15 +525,43 @@ export function Dashboard() {
 
       <main className="max-w-7xl mx-auto px-4 py-6 space-y-6">
         <div className="flex flex-col lg:flex-row gap-4">
-          <div className="flex-1">
-            <IndicatorSelector
-              indicators={indicators}
-              selectedIds={selectedIds}
-              onSelectionChange={setSelectedIds}
-              loadingIds={loadingIds}
-              errors={fetchErrors}
-            />
-          </div>
+<div className="flex-1">
+              <div className="mb-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">{t("leftAxis")}</div>
+              <IndicatorSelector
+                indicators={indicators}
+                selectedIds={selectedIds}
+                onSelectionChange={setSelectedIds}
+                loadingIds={loadingIds}
+                errors={fetchErrors}
+              />
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setSelectedIds([])}
+                className="mt-2"
+              >
+                {t("reset")}
+              </Button>
+            </div>
+            <div className="flex-1">
+              <div className="mb-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">{t("rightAxis")}</div>
+              <IndicatorSelector
+                indicators={indicators}
+                selectedIds={selectedIds2}
+                onSelectionChange={setSelectedIds2}
+                loadingIds={loadingIds}
+                errors={fetchErrors}
+                placeholder={t("selectRightAxisIndicators")}
+              />
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setSelectedIds2([])}
+                className="mt-2"
+              >
+                {t("reset")}
+              </Button>
+            </div>
           <DatePickerRange value={dateRange} onChange={setDateRange} />
         </div>
 
@@ -434,21 +600,25 @@ export function Dashboard() {
           </div>
         )}
 
-        {!isLoading && stats.length > 0 && <StatsCards stats={stats} />}
+{!isLoading && stats.length > 0 && <StatsCards stats={stats} />}
+{!isLoading && stats2.length > 0 && <StatsCards stats={stats2} />}
 
         {!isLoading && (
-          <DataChart
-            data={chartData}
-            indicators={selectedIndicators}
-            valueMode={valueMode}
-            title={
-              selectedIds.length > 0
-                ? selectedIndicators.map((i) => i.name).join(" vs ")
-                : t("timeSeriesData")
-            }
-          />
+          <div className="space-y-4">
+            <DataChart
+              data={chartData}
+              indicators={selectedIndicators}
+              rightIndicators={selectedIndicators2}
+              valueMode={valueMode}
+              title={
+                selectedIds.length > 0
+                  ? selectedIndicators.map((i) => i.name).join(" vs ")
+                  : t("timeSeriesData")
+              }
+            />
+          </div>
         )}
-      </main>
+       </main>
     </div>
   );
 }

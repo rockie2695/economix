@@ -1,8 +1,8 @@
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowUp, ArrowDown, Minus } from "lucide-react";
 import { useLocale } from "@/lib/LocaleContext";
+import { ArrowUp, ArrowDown, Minus } from "lucide-react";
 import type { StatsData } from "@/types";
 
 interface StatsCardsProps {
@@ -53,9 +53,12 @@ export function StatsCards({ stats, isLoading = false }: StatsCardsProps) {
         return (
           <Card key={stat.indicatorId}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                {stat.indicatorName}
-              </CardTitle>
+<CardTitle className="text-sm font-medium text-muted-foreground">
+                  {stat.indicatorName}
+                  <span className="text-xs font-normal text-muted-foreground ml-2">
+                    {t(stat.countryOrCategoryKey)}
+                  </span>
+                </CardTitle>
               <div
                 className={`flex items-center gap-1 text-xs ${
                   isNeutral

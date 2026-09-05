@@ -17,8 +17,8 @@ export interface Indicator {
   id: string;
   /** Display name, e.g. "GDP", "WTI Crude Oil" */
   name: string;
-  /** Data source: "fred" requires API key, "dbnomics" is free */
-  source: "fred" | "dbnomics";
+  /** Data source: "fred" requires API key, "dbnomics" is free, "worldbank" is open */
+  source: "fred" | "dbnomics" | "worldbank";
   /** FRED series ID (required if source is "fred") */
   seriesId?: string;
   /** DBnomics dataset code (required if source is "dbnomics") */
@@ -39,6 +39,8 @@ export interface Indicator {
   currency?: string;
   /** FRED series ID for exchange rate (e.g. "DEXUSEU" for EUR/USD) — used with currency */
   exchangeRateSeriesId?: string;
+  /** World Bank ISO2 country code (e.g. "US", "JP", "CN") — used for World Bank API queries */
+  countryCode?: string;
 }
 
 /** A single data point from the API (date + value pair) */
@@ -91,7 +93,7 @@ export interface ChartDataPoint {
   /** ISO date string */
   date: string;
   /** Dynamic keys: indicator ID → display value */
-  [indicatorId: string]: string | number;
+  [indicatorId: string]: string | number | null;
 }
 
 /** Computed statistics for one indicator's time series */
@@ -114,4 +116,6 @@ export interface StatsData {
   max: number;
   /** Unit string for display */
   unit: string;
+  /** Country or category key for display */
+  countryOrCategoryKey: string;
 }

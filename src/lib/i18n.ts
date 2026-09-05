@@ -24,6 +24,7 @@ export type TranslationKey =
   | "changeDescription"
   | "percentDescription"
   | "percentChangeDescription"
+  | "reset"
   // Date picker
   | "to"
   | "all"
@@ -56,13 +57,20 @@ export type TranslationKey =
   | "recessionRisk"
   // USD conversion
   | "convertToUSD"
-  | "convertToUSDDescription";
+  | "convertToUSDDescription"
+  // Right axis
+  | "selectRightAxisIndicators"
+  | "leftAxis"
+  | "rightAxis"
+  // Dual Y-axis
+  | "dualYAxis"
+  | "dualYAxisDescription";
 
 export const translations: Record<Locale, Record<TranslationKey, string>> = {
   en: {
     appTitle: "Economix",
     appSubtitle: "Economic Data Dashboard",
-    dataSource: "Data from FRED & DBnomics",
+    dataSource: "Data from FRED, DBnomics & World Bank",
     selectIndicators: "Select indicators...",
     searchIndicators: "Search indicators...",
     noIndicatorsFound: "No indicators found.",
@@ -100,17 +108,23 @@ export const translations: Record<Locale, Record<TranslationKey, string>> = {
     commodities: "Commodities",
     recessionRisk: "Recession Risk",
     valueDescription: "Raw numerical value",
+    reset: "Reset",
     changeDescription: "Change from previous data point",
     percentDescription: "Percentage change from previous data point",
     percentChangeDescription: "Cumulative net change from start of period",
     convertToUSD: "Convert to USD",
     convertToUSDDescription:
       "Convert non-USD values to US Dollars using exchange rates",
+    selectRightAxisIndicators: "Select right Y-axis indicators...",
+    leftAxis: "Left Axis",
+    rightAxis: "Right Axis",
+    dualYAxis: "Dual Y-Axis",
+    dualYAxisDescription: "Compare indicators with different scales using two Y-axes",
   },
   "zh-TW": {
     appTitle: "經濟指標",
     appSubtitle: "總體經濟數據儀表板",
-    dataSource: "資料來源：FRED 與 DBnomics",
+    dataSource: "資料來源：FRED、DBnomics 與 World Bank",
     selectIndicators: "選擇指標...",
     searchIndicators: "搜尋指標...",
     noIndicatorsFound: "找不到指標。",
@@ -148,11 +162,17 @@ export const translations: Record<Locale, Record<TranslationKey, string>> = {
     commodities: "大宗商品",
     recessionRisk: "衰退風險",
     valueDescription: "原始數值",
+    reset: "重置",
     changeDescription: "較前一筆資料的變動",
     percentDescription: "較前一筆資料的百分比變動",
     percentChangeDescription: "自期間起始以來的累計淨變動",
     convertToUSD: "轉換為美元",
     convertToUSDDescription: "使用匯率將非美元數值轉換為美元",
+    selectRightAxisIndicators: "選擇右側 Y 軸指標...",
+    leftAxis: "左軸",
+    rightAxis: "右軸",
+    dualYAxis: "雙 Y 軸",
+    dualYAxisDescription: "使用兩個 Y 軸比較不同量級的指標",
   },
 };
 

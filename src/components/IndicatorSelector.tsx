@@ -19,6 +19,7 @@ interface IndicatorSelectorProps {
   onSelectionChange: (ids: string[]) => void;
   loadingIds?: Set<string>;
   errors?: Map<string, string>;
+  placeholder?: string;
 }
 
 interface GroupedIndicators {
@@ -81,6 +82,7 @@ export function IndicatorSelector({
   onSelectionChange,
   loadingIds = new Set(),
   errors = new Map(),
+  placeholder,
 }: IndicatorSelectorProps) {
   const { t } = useLocale();
   const [open, setOpen] = React.useState(false);
@@ -123,7 +125,7 @@ export function IndicatorSelector({
           <div className="flex flex-wrap gap-1">
             {selectedIndicators.length === 0 ? (
               <span className="text-muted-foreground">
-                {t("selectIndicators")}
+                {placeholder || t("selectIndicators")}
               </span>
             ) : (
               selectedIndicators.map((ind) => (

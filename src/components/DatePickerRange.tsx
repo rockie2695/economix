@@ -20,14 +20,14 @@ export function DatePickerRange({ value, onChange }: DatePickerRangeProps) {
         type="date"
         value={value.startDate}
         onChange={(e) => onChange({ ...value, startDate: e.target.value })}
-        className="w-[160px]"
+        className="w-[160px] dark:text-white"
       />
       <span className="text-muted-foreground">{t("to")}</span>
       <Input
         type="date"
         value={value.endDate}
         onChange={(e) => onChange({ ...value, endDate: e.target.value })}
-        className="w-[160px]"
+        className="w-[160px] dark:text-white"
       />
       <div className="flex gap-1 ml-2">
         <Button

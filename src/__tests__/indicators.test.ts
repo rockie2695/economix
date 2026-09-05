@@ -68,7 +68,7 @@ describe("indicators", () => {
       expect(indicator.name).toBeDefined();
       expect(indicator.name.length).toBeGreaterThan(0);
       expect(indicator.source).toBeDefined();
-      expect(["fred", "dbnomics"]).toContain(indicator.source);
+      expect(["fred", "dbnomics", "worldbank"]).toContain(indicator.source);
       expect(indicator.category).toBeDefined();
       expect(indicator.category.length).toBeGreaterThan(0);
     }

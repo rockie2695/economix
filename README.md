@@ -1,6 +1,6 @@
 # Economix — Economic Data Dashboard
 
-A modern dashboard for visualizing macroeconomic data from **FRED** and **DBnomics** APIs. Built with Next.js App Router, TypeScript, Tailwind CSS, Recharts, and React Compiler. Supports **繁中/English** language switching and dark/light themes.
+A modern dashboard for visualizing macroeconomic data from **FRED**, **DBnomics**, and **World Bank** APIs. Built with Next.js App Router, TypeScript, Tailwind CSS, Recharts, and React Compiler. Supports **繁中/English** language switching and dark/light themes.
 
 ---
 
@@ -45,6 +45,7 @@ open http://localhost:3000
 ## Features
 
 - **Multi-indicator comparison** — Select one or more indicators to overlay on the same chart
+- **Dual Y-axis** — Compare indicators with different scales using left and right Y-axes
 - **10 countries + global** — US, Euro Area, Japan, China, UK, India, Brazil, South Korea, Canada, Australia + global commodities & recession risk
 - **Country-specific grouping** — Indicators organized by country and global categories
 - **Searchable indicator picker** — Filter by name, category, or description with per-indicator loading/error states
@@ -78,7 +79,7 @@ open http://localhost:3000
 | Theme | React Context + localStorage |
 | Testing | Vitest |
 | Compiler | React Compiler (babel-plugin-react-compiler) |
-| Data Sources | FRED API, DBnomics API |
+| Data Sources | FRED API, DBnomics API, World Bank API |
 
 ---
 
@@ -90,7 +91,9 @@ economix/
 │   ├── app/
 │   │   ├── api/
 │   │   │   ├── fred/route.ts         # FRED API proxy
-│   │   │   └── dbnomics/route.ts     # DBnomics API proxy
+│   │   │   ├── dbnomics/route.ts     # DBnomics API proxy
+│   │   │   ├── worldbank/route.ts    # World Bank API proxy
+│   │   │   └── exchange-rate/route.ts # Exchange rate API
 │   │   ├── layout.tsx                # Root layout (theme)
 │   │   ├── page.tsx                  # Entry point → Dashboard
 │   │   └── globals.css               # Tailwind + shadcn tokens
@@ -140,6 +143,10 @@ economix/
 
 No API key required — the API is free and open.
 
+### World Bank
+
+No API key required — the API is free and open.
+
 ---
 
 ## Environment Variables
@@ -151,6 +158,8 @@ Create `.env.local` in the project root:
 FRED_API_KEY=your_api_key_here
 
 # DBnomics does not require an API key
+
+# World Bank does not require an API key
 ```
 
 ---
@@ -300,18 +309,18 @@ FRED_API_KEY=your_api_key_here
 ┌──────────────────────────────────────────────────────────┐
 │                  Next.js API Routes                       │
 │                                                           │
-│  ┌─────────────────┐       ┌─────────────────┐           │
-│  │  /api/fred      │       │  /api/dbnomics  │           │
-│  │  (proxy)        │       │  (proxy)        │           │
-│  └────────┬────────┘       └────────┬────────┘           │
-│           │                         │                     │
-└───────────┼─────────────────────────┼─────────────────────┘
-            │                         │
-            ▼                         ▼
-    ┌───────────────┐       ┌───────────────┐
-    │  FRED API     │       │  DBnomics API │
-    │  (external)   │       │  (external)   │
-    └───────────────┘       └───────────────┘
+│  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐  │
+│  │  /api/fred      │  │  /api/dbnomics  │  │  /api/worldbank │  │
+│  │  (proxy)        │  │  (proxy)        │  │  (proxy)        │  │
+│  └────────┬────────┘  └────────┬────────┘  └────────┬────────┘  │
+│           │                    │                     │           │
+└───────────┼────────────────────┼─────────────────────┼───────────┘
+            │                    │                     │
+            ▼                    ▼                     ▼
+    ┌───────────────┐    ┌───────────────┐    ┌───────────────┐
+    │  FRED API     │    │  DBnomics API │    │  World Bank   │
+    │  (external)   │    │  (external)   │    │  API (external)│
+    └───────────────┘    └───────────────┘    └───────────────┘
 ```
 
 ### Data Flow
@@ -378,6 +387,30 @@ Proxies requests to the DBnomics API.
 }
 ```
 
+### `GET /api/worldbank`
+
+Proxies requests to the World Bank API.
+
+**Query Parameters:**
+
+| Param | Type | Required | Description |
+|-------|------|----------|-------------|
+| `indicator` | string | Yes | World Bank indicator code (e.g., "NY.GDP.MKTP.CD") |
+| `country` | string | No | ISO2 country code (default: "US") |
+| `date` | string | No | Date range (e.g., "2020:2024") |
+
+**Response:**
+
+```json
+{
+  "indicator": "NY.GDP.MKTP.CD",
+  "observations": [
+    { "date": "2020-01-01", "value": 20894500000000 },
+    { "date": "2021-01-01", "value": 23315000000000 }
+  ]
+}
+```
+
 ---
 
 ## Components
@@ -385,7 +418,8 @@ Proxies requests to the DBnomics API.
 ### `Dashboard.tsx`
 
 The main orchestrator. Manages state via SWR and URL persistence:
-- `selectedIds: string[]` — Which indicators are selected (synced to URL)
+- `selectedIds: string[]` — Which indicators are selected for left Y-axis (synced to URL)
+- `selectedIds2: string[]` — Which indicators are selected for right Y-axis (synced to URL)
 - `valueMode: ValueMode` — How to display values (synced to URL)
 - `dateRange: DateRange` — Start and end dates (synced to URL)
 - `allData: TimeSeriesData[]` — Fetched data via Promise.allSettled
@@ -428,6 +462,7 @@ A Recharts `LineChart` wrapper with:
 - Custom dark/light themed tooltip
 - Color-coded lines per indicator (shared CHART_COLORS)
 - Grid lines matching the theme
+- **Dual Y-axis support** — Compare indicators with different scales (left axis = solid lines, right axis = dashed lines)
 
 ### `StatsCards.tsx`
 
@@ -514,6 +549,26 @@ The app supports two locales:
   category: "commodities",
   description: "Description text",
   categoryType: "global",
+}
+```
+
+### World Bank Indicator
+
+1. Find the indicator at https://data.worldbank.org/
+2. Add an entry to `src/lib/indicators.ts`:
+
+```typescript
+{
+  id: "wb_indicator",
+  name: "World Bank Indicator",
+  source: "worldbank",
+  seriesId: "INDICATOR_CODE",  // e.g., "NY.GDP.MKTP.CD"
+  countryCode: "US",           // ISO2 country code
+  unit: "Units",
+  category: "nationalAccounts",
+  description: "Description text",
+  categoryType: "country",
+  country: "US",
 }
 ```
 
