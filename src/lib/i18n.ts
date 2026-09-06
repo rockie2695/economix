@@ -64,7 +64,20 @@ export type TranslationKey =
   | "rightAxis"
   // Dual Y-axis
   | "dualYAxis"
-  | "dualYAxisDescription";
+  | "dualYAxisDescription"
+  // Correlation analysis
+  | "correlationAnalysis"
+  | "strongPositive"
+  | "moderatePositive"
+  | "moderateNegative"
+  | "strongNegative"
+  | "strong_positive"
+  | "moderate_positive"
+  | "weak_positive"
+  | "none"
+  | "weak_negative"
+  | "moderate_negative"
+  | "strong_negative";
 
 export const translations: Record<Locale, Record<TranslationKey, string>> = {
   en: {
@@ -120,6 +133,18 @@ export const translations: Record<Locale, Record<TranslationKey, string>> = {
     rightAxis: "Right Axis",
     dualYAxis: "Dual Y-Axis",
     dualYAxisDescription: "Compare indicators with different scales using two Y-axes",
+    correlationAnalysis: "Correlation Analysis",
+    strongPositive: "Strong Positive",
+    moderatePositive: "Moderate Positive",
+    moderateNegative: "Moderate Negative",
+    strongNegative: "Strong Negative",
+    strong_positive: "Strong Positive",
+    moderate_positive: "Moderate Positive",
+    weak_positive: "Weak Positive",
+    none: "No Correlation",
+    weak_negative: "Weak Negative",
+    moderate_negative: "Moderate Negative",
+    strong_negative: "Strong Negative",
   },
   "zh-TW": {
     appTitle: "經濟指標",
@@ -173,6 +198,18 @@ export const translations: Record<Locale, Record<TranslationKey, string>> = {
     rightAxis: "右軸",
     dualYAxis: "雙 Y 軸",
     dualYAxisDescription: "使用兩個 Y 軸比較不同量級的指標",
+    correlationAnalysis: "相關性分析",
+    strongPositive: "強正相關",
+    moderatePositive: "中度正相關",
+    moderateNegative: "中度負相關",
+    strongNegative: "強負相關",
+    strong_positive: "強正相關",
+    moderate_positive: "中度正相關",
+    weak_positive: "弱正相關",
+    none: "無相關",
+    weak_negative: "弱負相關",
+    moderate_negative: "中度負相關",
+    strong_negative: "強負相關",
   },
 };
 

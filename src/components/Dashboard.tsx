@@ -9,6 +9,7 @@ import { DatePickerRange } from "./DatePickerRange";
 import { ValueModeSelector } from "./ValueModeSelector";
 import { DataChart } from "./DataChart";
 import { StatsCards } from "./StatsCards";
+import { CorrelationMatrix } from "./CorrelationMatrix";
 import { LanguageSwitcher } from "./LanguageSwitcher";
 import { ExportButton } from "./ExportButton";
 import { USDConvertToggle } from "./USDConvertToggle";
@@ -616,6 +617,14 @@ export function Dashboard() {
                   : t("timeSeriesData")
               }
             />
+            {chartData.length > 0 &&
+              (selectedIndicators.length + selectedIndicators2.length >= 2) && (
+                <CorrelationMatrix
+                  data={chartData}
+                  indicators={selectedIndicators}
+                  rightIndicators={selectedIndicators2}
+                />
+              )}
           </div>
         )}
        </main>
