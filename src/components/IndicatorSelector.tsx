@@ -146,8 +146,8 @@ export function IndicatorSelector({
                   }}
                 >
                   {ind.country
-                    ? `${t(`country_${ind.country}`)} · ${ind.name} · ${t(ind.category)}`
-                    : `${ind.name} · ${t(ind.category)}`}
+                    ? `${t(`country_${ind.country}`)} · ${getIndicatorName(ind, t)} · ${t(ind.category)}`
+                    : `${getIndicatorName(ind, t)} · ${t(ind.category)}`}
                   <X className="ml-1 h-3 w-3 cursor-pointer" />
                 </Badge>
               ))
