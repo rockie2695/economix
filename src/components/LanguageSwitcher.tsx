@@ -12,6 +12,7 @@ export function LanguageSwitcher() {
       size="sm"
       onClick={() => setLocale(locale === "en" ? "zh-TW" : "en")}
       className="text-sm font-medium"
+      aria-label={locale === "en" ? "切換至繁體中文" : "Switch to English"}
     >
       {locale === "en" ? "繁中" : "EN"}
     </Button>

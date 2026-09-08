@@ -22,31 +22,35 @@ Economix is a macroeconomic data visualization dashboard. It fetches data from F
 src/
 ├── app/
 │   ├── api/
-│   │   ├── fred/route.ts         # FRED API proxy (server-side, hides API key)
-│   │   ├── dbnomics/route.ts     # DBnomics API proxy (server-side)
-│   │   ├── worldbank/route.ts    # World Bank API proxy (server-side)
+│   │   ├── fred/route.ts         # FRED API proxy (server-side, hides API key, accepts locale)
+│   │   ├── dbnomics/route.ts     # DBnomics API proxy (server-side, accepts locale)
+│   │   ├── worldbank/route.ts    # World Bank API proxy (server-side, accepts locale)
 │   │   └── exchange-rate/route.ts # Exchange rate API (server-side)
-│   ├── layout.tsx                # Root layout, Geist font
+│   ├── layout.tsx                # Root layout, Geist font, theme flash prevention
 │   ├── page.tsx                  # Entry → renders <Dashboard />
 │   └── globals.css               # Tailwind imports + shadcn CSS variables
 ├── components/
 │   ├── Dashboard.tsx             # Main orchestrator (SWR, URL state, Promise.allSettled)
-│   ├── IndicatorSelector.tsx     # Searchable multi-select popover (grouped, loading/error)
+│   ├── IndicatorSelector.tsx     # Searchable multi-select popover (grouped, loading/error, i18n names)
 │   ├── DatePickerRange.tsx       # Date range inputs + quick presets
-│   ├── ValueModeSelector.tsx     # Segmented control (4 modes)
-│   ├── DataChart.tsx             # Recharts LineChart wrapper (responsive height)
-│   ├── StatsCards.tsx            # Stats cards grid
+│   ├── ValueModeSelector.tsx     # Segmented control (4 modes with tooltips)
+│   ├── DataChart.tsx             # Recharts LineChart wrapper (responsive height, dual Y-axis)
+│   ├── StatsCards.tsx            # Stats cards grid (theme-aware colors)
+│   ├── CorrelationMatrix.tsx     # Correlation matrix with i18n'd names
 │   ├── LanguageSwitcher.tsx      # 繁中/EN toggle button
 │   ├── ThemeToggle.tsx           # Dark/light theme toggle
-│   ├── ExportButton.tsx          # CSV export button
+│   ├── ExportButton.tsx          # CSV export button (csvEscape for proper quoting)
+│   ├── USDConvertToggle.tsx      # USD conversion toggle
 │   ├── Providers.tsx             # Client-side context providers (Locale + Theme)
-│   └── ui/                       # shadcn/ui primitives (button, card, etc.)
+│   └── ui/                       # shadcn/ui primitives (button, card, tooltip, etc.)
 ├── lib/
-│   ├── indicators.ts             # Indicator definitions array (52 indicators)
-│   ├── i18n.ts                   # Translation dictionaries (en/zh-TW, 50 keys)
+│   ├── indicators.ts             # Indicator definitions array (52 indicators, nameKey for i18n)
+│   ├── i18n.ts                   # Translation dictionaries (en/zh-TW, 93 keys including indicator names)
+│   ├── api-errors.ts             # Locale-aware API error messages
 │   ├── LocaleContext.tsx          # React Context for locale state
 │   ├── ThemeContext.tsx           # React Context for theme state
 │   ├── constants.ts              # Shared constants (CHART_COLORS)
+│   ├── correlation.ts            # Pearson correlation computation
 │   └── utils.ts                  # cn() merge helper
 ├── types/
 │   └── index.ts                  # All TypeScript interfaces
@@ -54,7 +58,9 @@ src/
     ├── i18n.test.ts              # Translation key parity tests
     ├── indicators.test.ts        # Indicator structure validation
     ├── chart-data.test.ts        # processDataForChart unit tests
-    └── stats.test.ts             # calculateStats unit tests
+    ├── stats.test.ts             # calculateStats unit tests
+    ├── api-errors.test.ts        # API error message tests
+    └── url-state.test.ts         # URL state parsing tests
 ```
 
 ## Key Data Types
@@ -64,6 +70,7 @@ src/
 interface Indicator {
   id: string;              // unique key, e.g. "gdp"
   name: string;            // display name, e.g. "GDP"
+  nameKey?: string;        // i18n key for indicator name, e.g. "gdp"
   source: "fred" | "dbnomics" | "worldbank";
   seriesId?: string;       // FRED series ID
   datasetCode?: string;    // DBnomics dataset code
@@ -161,7 +168,7 @@ const { locale, setLocale, t } = useLocale();
 // t("appTitle") → "Economix" or "經濟指標"
 ```
 
-Translation keys defined in `src/lib/i18n.ts`. Categories and countries use i18n keys (e.g., `t(indicator.category)`, `t("country_US")`).
+Translation keys defined in `src/lib/i18n.ts`. Categories and countries use i18n keys (e.g., `t(indicator.category)`, `t("country_US")`). Indicator names use `nameKey` field — `getIndicatorDisplayName()` in Dashboard, `getIndicatorName()` in IndicatorSelector translate indicator names at render time.
 
 ### Theme
 
@@ -221,6 +228,7 @@ Edit `src/lib/indicators.ts`, add to the `indicators` array:
 {
   id: "new_indicator",
   name: "New Indicator",
+  nameKey: "translation_key",  // optional: i18n key for indicator name
   source: "fred",
   seriesId: "FRED_SERIES_ID",
   unit: "Units",
@@ -329,11 +337,11 @@ This project uses shadcn/ui v4 which is built on `@base-ui/react`, NOT Radix UI.
 ### Testing
 
 ```bash
-npm test           # Run all tests (Vitest, 32 tests)
+npm test           # Run all tests (Vitest, 44 tests)
 npx vitest         # Run tests in watch mode
 ```
 
-Test files in `src/__tests__/` cover: i18n translations (6 tests), indicator structure (10 tests), `processDataForChart()` (8 tests), `calculateStats()` (8 tests).
+Test files in `src/__tests__/` cover: i18n translations (6 tests), indicator structure (10 tests), `processDataForChart()` (8 tests), `calculateStats()` (8 tests), API error messages (3 tests), URL state parsing (9 tests).
 
 ## Environment Variables
 

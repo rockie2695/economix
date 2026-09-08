@@ -20,6 +20,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
+import { getErrorMessage, type Locale } from "@/lib/api-errors";
 
 const DBNOMICS_BASE_URL = "https://api.db.nomics.world/v22";
 
@@ -29,10 +30,11 @@ export async function GET(request: NextRequest) {
   const providerCode = searchParams.get("provider_code");
   const startDate = searchParams.get("start_date");
   const endDate = searchParams.get("end_date");
+  const locale = (searchParams.get("locale") || "en") as Locale;
 
   if (!datasetCode || !providerCode) {
     return NextResponse.json(
-      { error: "dataset_code and provider_code are required" },
+      { error: getErrorMessage("dataset_code and provider_code are required", locale) },
       { status: 400 }
     );
   }
@@ -82,7 +84,7 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error("DBnomics API error:", error);
     return NextResponse.json(
-      { error: "Failed to fetch data from DBnomics" },
+      { error: getErrorMessage("Failed to fetch data from DBnomics", locale) },
       { status: 500 }
     );
   }

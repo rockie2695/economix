@@ -101,20 +101,24 @@ economix/
 │   │   ├── Dashboard.tsx             # Main orchestrator (SWR, URL state, Promise.allSettled)
 │   │   ├── IndicatorSelector.tsx     # Searchable multi-select with loading/error UI
 │   │   ├── DatePickerRange.tsx       # Date range + quick presets
-│   │   ├── ValueModeSelector.tsx     # Value/Change/%/% Change toggle
-│   │   ├── DataChart.tsx             # Recharts LineChart (responsive height)
-│   │   ├── StatsCards.tsx            # Stats display cards
+│   │   ├── ValueModeSelector.tsx     # Value/Change/%/% Change toggle with tooltips
+│   │   ├── DataChart.tsx             # Recharts LineChart (responsive height, dual Y-axis)
+│   │   ├── StatsCards.tsx            # Stats display cards (theme-aware colors)
+│   │   ├── CorrelationMatrix.tsx     # Correlation matrix
 │   │   ├── LanguageSwitcher.tsx      # 繁中/EN toggle
 │   │   ├── ThemeToggle.tsx           # Dark/light theme toggle
-│   │   ├── ExportButton.tsx          # CSV export
+│   │   ├── ExportButton.tsx          # CSV export with proper escaping
+│   │   ├── USDConvertToggle.tsx      # USD conversion toggle
 │   │   ├── Providers.tsx             # Client-side context providers
 │   │   └── ui/                       # shadcn/ui primitives
 │   ├── lib/
-│   │   ├── indicators.ts             # Indicator definitions (52 indicators)
-│   │   ├── i18n.ts                   # Translation dictionaries (en/zh-TW)
+│   │   ├── indicators.ts             # Indicator definitions (52 indicators, nameKey for i18n)
+│   │   ├── i18n.ts                   # Translation dictionaries (en/zh-TW, 93 keys)
+│   │   ├── api-errors.ts             # Locale-aware API error messages
 │   │   ├── LocaleContext.tsx          # React Context for locale state
 │   │   ├── ThemeContext.tsx           # React Context for theme state
 │   │   ├── constants.ts              # Shared constants (CHART_COLORS)
+│   │   ├── correlation.ts            # Pearson correlation computation
 │   │   └── utils.ts                  # cn() helper
 │   ├── types/
 │   │   └── index.ts                  # TypeScript interfaces
@@ -122,7 +126,9 @@ economix/
 │       ├── i18n.test.ts              # Translation key parity tests
 │       ├── indicators.test.ts        # Indicator structure validation
 │       ├── chart-data.test.ts        # processDataForChart unit tests
-│       └── stats.test.ts             # calculateStats unit tests
+│       ├── stats.test.ts             # calculateStats unit tests
+│       ├── api-errors.test.ts        # API error message tests
+│       └── url-state.test.ts         # URL state parsing tests
 ├── vitest.config.ts                  # Vitest configuration
 ├── .env.local                        # API keys (git-ignored)
 └── package.json
@@ -348,6 +354,7 @@ Proxies requests to the FRED API.
 | `series_id` | string | Yes | FRED series ID (e.g., "GDP") |
 | `start_date` | string | No | ISO date (default: 2000-01-01) |
 | `end_date` | string | No | ISO date (default: today) |
+| `locale` | string | No | `"en"` or `"zh-TW"` for localized error messages (default: "en") |
 
 **Response:**
 
@@ -373,6 +380,7 @@ Proxies requests to the DBnomics API.
 | `provider_code` | string | Yes | Provider code (e.g., "FRED", "IMF") |
 | `start_date` | string | No | ISO date |
 | `end_date` | string | No | ISO date |
+| `locale` | string | No | `"en"` or `"zh-TW"` for localized error messages (default: "en") |
 
 **Response:**
 
@@ -398,6 +406,7 @@ Proxies requests to the World Bank API.
 | `indicator` | string | Yes | World Bank indicator code (e.g., "NY.GDP.MKTP.CD") |
 | `country` | string | No | ISO2 country code (default: "US") |
 | `date` | string | No | Date range (e.g., "2020:2024") |
+| `locale` | string | No | `"en"` or `"zh-TW"` for localized error messages (default: "en") |
 
 **Response:**
 
@@ -433,9 +442,10 @@ Exports `processDataForChart()` and `calculateStats()` for testing.
 A popover with a searchable list of indicators grouped by country and global categories. Supports:
 - Multi-select with badge chips
 - Click badges to remove
-- Search by name, category, or description
+- Search by name, category, or description (searches both English and translated names)
 - Per-indicator loading spinner and error badge
 - Grouped layout: Country-specific → country → indicators, Global → category → indicators
+- Translated indicator names via `getIndicatorName()` helper
 
 ### `DatePickerRange.tsx`
 
@@ -481,7 +491,7 @@ A toggle button that switches between dark and light themes. Theme is persisted 
 
 ### `ExportButton.tsx`
 
-A button that exports the current chart data to CSV format. Downloads as `economix-YYYY-MM-DD.csv`.
+A button that exports the current chart data to CSV format. Properly escapes values containing commas or quotes. Downloads as `economix-YYYY-MM-DD.csv`.
 
 ---
 
@@ -493,7 +503,7 @@ The app supports two locales:
 
 ### How it works
 
-- `src/lib/i18n.ts` — Translation dictionary with 50 keys
+- `src/lib/i18n.ts` — Translation dictionary with 93 keys (including indicator names like `gdp`, `unemployment`, `cpi`, etc.)
 - `src/lib/LocaleContext.tsx` — React Context providing `locale`, `t()`, `setLocale()`
 - `src/components/LanguageSwitcher.tsx` — Toggle button in header
 - Locale is persisted to `localStorage("economix-locale")`
@@ -596,6 +606,8 @@ npx vitest
 | `src/__tests__/indicators.test.ts` | Indicator structure, 10 countries, recession risk, 40+ total |
 | `src/__tests__/chart-data.test.ts` | `processDataForChart()` — merge, sort, value modes |
 | `src/__tests__/stats.test.ts` | `calculateStats()` — change, percentages, min/max |
+| `src/__tests__/api-errors.test.ts` | API error messages, locale switching |
+| `src/__tests__/url-state.test.ts` | `getScaleFactor()`, URL state parsing |
 
 ---
 

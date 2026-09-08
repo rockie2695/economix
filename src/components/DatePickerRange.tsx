@@ -14,20 +14,28 @@ interface DatePickerRangeProps {
 export function DatePickerRange({ value, onChange }: DatePickerRangeProps) {
   const { t } = useLocale();
 
+  const handleChange = (range: DateRange) => {
+    if (range.startDate > range.endDate) {
+      onChange({ startDate: range.endDate, endDate: range.startDate });
+    } else {
+      onChange(range);
+    }
+  };
+
   return (
     <div className="flex items-center gap-2">
       <Input
         type="date"
         value={value.startDate}
-        onChange={(e) => onChange({ ...value, startDate: e.target.value })}
-        className="w-[160px] dark:text-white"
+        onChange={(e) => handleChange({ ...value, startDate: e.target.value })}
+        className="w-[160px]"
       />
       <span className="text-muted-foreground">{t("to")}</span>
       <Input
         type="date"
         value={value.endDate}
-        onChange={(e) => onChange({ ...value, endDate: e.target.value })}
-        className="w-[160px] dark:text-white"
+        onChange={(e) => handleChange({ ...value, endDate: e.target.value })}
+        className="w-[160px]"
       />
       <div className="flex gap-1 ml-2">
         <Button
@@ -37,7 +45,7 @@ export function DatePickerRange({ value, onChange }: DatePickerRangeProps) {
             const now = new Date();
             const start = new Date();
             start.setFullYear(start.getFullYear() - 1);
-            onChange({
+            handleChange({
               startDate: start.toISOString().split("T")[0],
               endDate: now.toISOString().split("T")[0],
             });
@@ -52,7 +60,7 @@ export function DatePickerRange({ value, onChange }: DatePickerRangeProps) {
             const now = new Date();
             const start = new Date();
             start.setFullYear(start.getFullYear() - 5);
-            onChange({
+            handleChange({
               startDate: start.toISOString().split("T")[0],
               endDate: now.toISOString().split("T")[0],
             });
@@ -67,7 +75,7 @@ export function DatePickerRange({ value, onChange }: DatePickerRangeProps) {
             const now = new Date();
             const start = new Date();
             start.setFullYear(start.getFullYear() - 10);
-            onChange({
+            handleChange({
               startDate: start.toISOString().split("T")[0],
               endDate: now.toISOString().split("T")[0],
             });
@@ -79,8 +87,8 @@ export function DatePickerRange({ value, onChange }: DatePickerRangeProps) {
           variant="outline"
           size="sm"
           onClick={() => {
-            onChange({
-              startDate: "2000-01-01",
+            handleChange({
+              startDate: "1960-01-01",
               endDate: new Date().toISOString().split("T")[0],
             });
           }}

@@ -64,8 +64,8 @@ export function StatsCards({ stats, isLoading = false }: StatsCardsProps) {
                   isNeutral
                     ? "text-muted-foreground"
                     : isPositive
-                    ? "text-emerald-500"
-                    : "text-red-500"
+                    ? "text-green-600 dark:text-green-400"
+                    : "text-red-600 dark:text-red-400"
                 }`}
               >
                 {isNeutral ? (
@@ -90,8 +90,8 @@ export function StatsCards({ stats, isLoading = false }: StatsCardsProps) {
                   isNeutral
                     ? "text-muted-foreground"
                     : isPositive
-                    ? "text-emerald-500"
-                    : "text-red-500"
+                    ? "text-green-600 dark:text-green-400"
+                    : "text-red-600 dark:text-red-400"
                 }`}
               >
                 {isPositive ? "+" : ""}

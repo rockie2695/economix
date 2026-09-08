@@ -29,7 +29,7 @@ const RELATIONSHIP_ICONS: Record<CorrelationResult["relationship"], string> = {
   none: "—",
   weak_negative: "↘",
   moderate_negative: "↘↘",
-  strong_negative: "↘↘↘",
+  strong_negative: "↘↘",
 };
 
 export function CorrelationMatrix({
@@ -54,8 +54,16 @@ export function CorrelationMatrix({
     return computeCorrelationMatrix(dataMap, allIndicators.map((i) => i.id));
   }, [data, allIndicators]);
 
+  const indicatorNameMap = React.useMemo(() => {
+    const map = new Map<string, string>();
+    for (const ind of allIndicators) {
+      map.set(ind.id, ind.name);
+    }
+    return map;
+  }, [allIndicators]);
+
   const getIndicatorName = (id: string) => {
-    return allIndicators.find((i) => i.id === id)?.name ?? id;
+    return indicatorNameMap.get(id) ?? id;
   };
 
   if (allIndicators.length < 2 || correlations.length === 0) {
@@ -98,7 +106,7 @@ export function CorrelationMatrix({
               >
                 <div className="flex items-center gap-2 text-sm">
                   <span className="font-medium">{getIndicatorName(result.indicatorA)}</span>
-                  <span className="text-muted-foreground">vs</span>
+                  <span className="text-muted-foreground">{t("vs")}</span>
                   <span className="font-medium">{getIndicatorName(result.indicatorB)}</span>
                 </div>
                 <div className="flex items-center gap-3">

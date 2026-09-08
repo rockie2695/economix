@@ -17,6 +17,8 @@ export interface Indicator {
   id: string;
   /** Display name, e.g. "GDP", "WTI Crude Oil" */
   name: string;
+  /** i18n key for translated name, e.g. "gdp" — falls back to `name` if absent */
+  nameKey?: string;
   /** Data source: "fred" requires API key, "dbnomics" is free, "worldbank" is open */
   source: "fred" | "dbnomics" | "worldbank";
   /** FRED series ID (required if source is "fred") */

@@ -42,30 +42,28 @@ export function ValueModeSelector({ value, onChange }: ValueModeSelectorProps) {
   ];
 
   return (
-    <Tooltip>
-      <div className="flex rounded-lg border bg-muted p-1">
-        {modes.map((mode) => (
-          <Tooltip key={mode.value}>
-            <TooltipTrigger
-              render={
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => onChange(mode.value)}
-                  className={cn(
-                    "flex-1",
-                    value === mode.value &&
-                      "bg-background shadow-sm text-foreground"
-                  )}
-                >
-                  {mode.label}
-                </Button>
-              }
-            />
-            <TooltipContent side="bottom">{mode.description}</TooltipContent>
-          </Tooltip>
-        ))}
-      </div>
-    </Tooltip>
+    <div className="flex rounded-lg border bg-muted p-1">
+      {modes.map((mode) => (
+        <Tooltip key={mode.value}>
+          <TooltipTrigger
+            render={
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => onChange(mode.value)}
+                className={cn(
+                  "flex-1",
+                  value === mode.value &&
+                    "bg-background shadow-sm text-foreground"
+                )}
+              >
+                {mode.label}
+              </Button>
+            }
+          />
+          <TooltipContent side="bottom">{mode.description}</TooltipContent>
+        </Tooltip>
+      ))}
+    </div>
   );
 }

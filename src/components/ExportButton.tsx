@@ -10,13 +10,20 @@ interface ExportButtonProps {
 }
 
 export function ExportButton({ data, indicators }: ExportButtonProps) {
+  const csvEscape = (v: string | number): string => {
+    const s = String(v);
+    return s.includes(",") || s.includes('"') || s.includes("\n")
+      ? `"${s.replace(/"/g, '""')}"`
+      : s;
+  };
+
   const handleExport = () => {
     if (data.length === 0) return;
 
     const indicatorIds = indicators.map((i) => i.id);
     const headers = ["date", ...indicatorIds].join(",");
     const rows = data.map((row) =>
-      [row.date, ...indicatorIds.map((id) => row[id] ?? "")].join(",")
+      [row.date, ...indicatorIds.map((id) => csvEscape(row[id] ?? ""))].join(",")
     );
     const csv = [headers, ...rows].join("\n");
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });

@@ -20,6 +20,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
+import { getErrorMessage, type Locale } from "@/lib/api-errors";
 
 const FRED_API_KEY = process.env.FRED_API_KEY || "";
 const FRED_BASE_URL = "https://api.stlouisfed.org/fred/series/observations";
@@ -30,14 +31,15 @@ export async function GET(request: NextRequest) {
   const startDate = searchParams.get("start_date") || "2000-01-01";
   const endDate = searchParams.get("end_date") || new Date().toISOString().split("T")[0];
   const limit = searchParams.get("limit") || "9999";
+  const locale = (searchParams.get("locale") || "en") as Locale;
 
   if (!seriesId) {
-    return NextResponse.json({ error: "series_id is required" }, { status: 400 });
+    return NextResponse.json({ error: getErrorMessage("series_id is required", locale) }, { status: 400 });
   }
 
   if (!FRED_API_KEY) {
     return NextResponse.json(
-      { error: "FRED API key not configured. Set FRED_API_KEY in .env.local" },
+      { error: getErrorMessage("FRED API key not configured", locale) },
       { status: 500 }
     );
   }
@@ -80,7 +82,7 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error("FRED API error:", error);
     return NextResponse.json(
-      { error: "Failed to fetch data from FRED" },
+      { error: getErrorMessage("Failed to fetch data from FRED", locale) },
       { status: 500 }
     );
   }

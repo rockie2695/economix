@@ -5,6 +5,7 @@ export const indicators: Indicator[] = [
   {
     id: "gdp",
     name: "GDP",
+    nameKey: "gdp",
     source: "fred",
     seriesId: "GDP",
     unit: "Dollars",
@@ -141,6 +142,7 @@ export const indicators: Indicator[] = [
   {
     id: "eu_gdp",
     name: "GDP",
+    nameKey: "gdp",
     source: "fred",
     seriesId: "CLVMNACSCAB1GQEA19",
     unit: "Euros",
@@ -192,6 +194,7 @@ export const indicators: Indicator[] = [
   {
     id: "jp_gdp",
     name: "GDP",
+    nameKey: "gdp",
     source: "fred",
     seriesId: "JPNRGDPEXP",
     unit: "Yen",
@@ -241,6 +244,7 @@ export const indicators: Indicator[] = [
   {
     id: "cn_gdp",
     name: "GDP",
+    nameKey: "gdp",
     source: "fred",
     seriesId: "MKTGDPCNA646NWDB",
     unit: "Current US Dollars",
@@ -276,6 +280,7 @@ export const indicators: Indicator[] = [
   {
     id: "uk_gdp",
     name: "GDP",
+    nameKey: "gdp",
     source: "fred",
     seriesId: "UKNGDP",
     unit: "Pounds",
@@ -367,6 +372,7 @@ export const indicators: Indicator[] = [
   {
     id: "in_gdp",
     name: "GDP",
+    nameKey: "gdp",
     source: "fred",
     seriesId: "MKTGDPINA646NWDB",
     unit: "Current US Dollars",
@@ -402,6 +408,7 @@ export const indicators: Indicator[] = [
   {
     id: "br_gdp",
     name: "GDP",
+    nameKey: "gdp",
     source: "fred",
     seriesId: "MKTGDPBRA646NWDB",
     unit: "Current US Dollars",
@@ -437,6 +444,7 @@ export const indicators: Indicator[] = [
   {
     id: "kr_gdp",
     name: "GDP",
+    nameKey: "gdp",
     source: "fred",
     seriesId: "MKTGDPKRA646NWDB",
     unit: "Current US Dollars",
@@ -472,6 +480,7 @@ export const indicators: Indicator[] = [
   {
     id: "ca_gdp",
     name: "GDP",
+    nameKey: "gdp",
     source: "fred",
     seriesId: "MKTGDPCAA646NWDB",
     unit: "Current US Dollars",
@@ -518,6 +527,7 @@ export const indicators: Indicator[] = [
   {
     id: "au_gdp",
     name: "GDP",
+    nameKey: "gdp",
     source: "fred",
     seriesId: "NGDPRSAXDCAUQ",
     unit: "Domestic Currency",
@@ -612,6 +622,7 @@ export const indicators: Indicator[] = [
   {
     id: "worldbank_gdp_us",
     name: "GDP (World Bank)",
+    nameKey: "gdp",
     source: "worldbank",
     seriesId: "NY.GDP.MKTP.CD",
     unit: "Current US Dollars",
@@ -636,6 +647,7 @@ export const indicators: Indicator[] = [
   {
     id: "worldbank_gdp_per_capita_us",
     name: "GDP per Capita (World Bank)",
+    nameKey: "gdpPerCapita",
     source: "worldbank",
     seriesId: "NY.GDP.PCAP.CD",
     unit: "US Dollars",
@@ -648,6 +660,7 @@ export const indicators: Indicator[] = [
   {
     id: "worldbank_gdp_growth_us",
     name: "GDP Growth (World Bank)",
+    nameKey: "gdpGrowth",
     source: "worldbank",
     seriesId: "NY.GDP.MKTP.KD.ZG",
     unit: "Percent",
@@ -710,6 +723,7 @@ export const indicators: Indicator[] = [
   {
     id: "worldbank_gdp_eu",
     name: "GDP (World Bank)",
+    nameKey: "gdp",
     source: "worldbank",
     seriesId: "NY.GDP.MKTP.CD",
     unit: "Current US Dollars",
@@ -722,6 +736,7 @@ export const indicators: Indicator[] = [
   {
     id: "worldbank_gdp_growth_eu",
     name: "GDP Growth (World Bank)",
+    nameKey: "gdpGrowth",
     source: "worldbank",
     seriesId: "NY.GDP.MKTP.KD.ZG",
     unit: "Percent",
@@ -748,6 +763,7 @@ export const indicators: Indicator[] = [
   {
     id: "worldbank_gdp_jp",
     name: "GDP (World Bank)",
+    nameKey: "gdp",
     source: "worldbank",
     seriesId: "NY.GDP.MKTP.CD",
     unit: "Current US Dollars",
@@ -760,6 +776,7 @@ export const indicators: Indicator[] = [
   {
     id: "worldbank_gdp_growth_jp",
     name: "GDP Growth (World Bank)",
+    nameKey: "gdpGrowth",
     source: "worldbank",
     seriesId: "NY.GDP.MKTP.KD.ZG",
     unit: "Percent",
@@ -786,6 +803,7 @@ export const indicators: Indicator[] = [
   {
     id: "worldbank_gdp_cn",
     name: "GDP (World Bank)",
+    nameKey: "gdp",
     source: "worldbank",
     seriesId: "NY.GDP.MKTP.CD",
     unit: "Current US Dollars",
@@ -798,6 +816,7 @@ export const indicators: Indicator[] = [
   {
     id: "worldbank_gdp_growth_cn",
     name: "GDP Growth (World Bank)",
+    nameKey: "gdpGrowth",
     source: "worldbank",
     seriesId: "NY.GDP.MKTP.KD.ZG",
     unit: "Percent",
@@ -824,6 +843,7 @@ export const indicators: Indicator[] = [
   {
     id: "worldbank_gdp_gb",
     name: "GDP (World Bank)",
+    nameKey: "gdp",
     source: "worldbank",
     seriesId: "NY.GDP.MKTP.CD",
     unit: "Current US Dollars",
@@ -836,6 +856,7 @@ export const indicators: Indicator[] = [
   {
     id: "worldbank_gdp_growth_gb",
     name: "GDP Growth (World Bank)",
+    nameKey: "gdpGrowth",
     source: "worldbank",
     seriesId: "NY.GDP.MKTP.KD.ZG",
     unit: "Percent",
@@ -862,6 +883,7 @@ export const indicators: Indicator[] = [
   {
     id: "worldbank_gdp_in",
     name: "GDP (World Bank)",
+    nameKey: "gdp",
     source: "worldbank",
     seriesId: "NY.GDP.MKTP.CD",
     unit: "Current US Dollars",
@@ -874,6 +896,7 @@ export const indicators: Indicator[] = [
   {
     id: "worldbank_gdp_growth_in",
     name: "GDP Growth (World Bank)",
+    nameKey: "gdpGrowth",
     source: "worldbank",
     seriesId: "NY.GDP.MKTP.KD.ZG",
     unit: "Percent",
@@ -900,6 +923,7 @@ export const indicators: Indicator[] = [
   {
     id: "worldbank_gdp_br",
     name: "GDP (World Bank)",
+    nameKey: "gdp",
     source: "worldbank",
     seriesId: "NY.GDP.MKTP.CD",
     unit: "Current US Dollars",
@@ -912,6 +936,7 @@ export const indicators: Indicator[] = [
   {
     id: "worldbank_gdp_growth_br",
     name: "GDP Growth (World Bank)",
+    nameKey: "gdpGrowth",
     source: "worldbank",
     seriesId: "NY.GDP.MKTP.KD.ZG",
     unit: "Percent",
@@ -938,6 +963,7 @@ export const indicators: Indicator[] = [
   {
     id: "worldbank_gdp_kr",
     name: "GDP (World Bank)",
+    nameKey: "gdp",
     source: "worldbank",
     seriesId: "NY.GDP.MKTP.CD",
     unit: "Current US Dollars",
@@ -950,6 +976,7 @@ export const indicators: Indicator[] = [
   {
     id: "worldbank_gdp_growth_kr",
     name: "GDP Growth (World Bank)",
+    nameKey: "gdpGrowth",
     source: "worldbank",
     seriesId: "NY.GDP.MKTP.KD.ZG",
     unit: "Percent",
@@ -976,6 +1003,7 @@ export const indicators: Indicator[] = [
   {
     id: "worldbank_gdp_ca",
     name: "GDP (World Bank)",
+    nameKey: "gdp",
     source: "worldbank",
     seriesId: "NY.GDP.MKTP.CD",
     unit: "Current US Dollars",
@@ -988,6 +1016,7 @@ export const indicators: Indicator[] = [
   {
     id: "worldbank_gdp_growth_ca",
     name: "GDP Growth (World Bank)",
+    nameKey: "gdpGrowth",
     source: "worldbank",
     seriesId: "NY.GDP.MKTP.KD.ZG",
     unit: "Percent",
@@ -1014,6 +1043,7 @@ export const indicators: Indicator[] = [
   {
     id: "worldbank_gdp_au",
     name: "GDP (World Bank)",
+    nameKey: "gdp",
     source: "worldbank",
     seriesId: "NY.GDP.MKTP.CD",
     unit: "Current US Dollars",
@@ -1026,6 +1056,7 @@ export const indicators: Indicator[] = [
   {
     id: "worldbank_gdp_growth_au",
     name: "GDP Growth (World Bank)",
+    nameKey: "gdpGrowth",
     source: "worldbank",
     seriesId: "NY.GDP.MKTP.KD.ZG",
     unit: "Percent",

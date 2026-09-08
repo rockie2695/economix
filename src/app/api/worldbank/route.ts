@@ -19,18 +19,28 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
+import { getErrorMessage, type Locale } from "@/lib/api-errors";
 
 const WORLD_BASE_URL = "https://api.worldbank.org/v2";
+
+interface WorldBankObservation {
+  indicator: { id: string; value: string };
+  country: { id: string; value: string };
+  date: string;
+  value: number | null;
+  decimal: number;
+}
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const indicatorId = searchParams.get("indicator");
   const countryCode = searchParams.get("country") || "US";
   const dateRange = searchParams.get("date") || "2020:2024";
+  const locale = (searchParams.get("locale") || "en") as Locale;
 
   if (!indicatorId) {
     return NextResponse.json(
-      { error: "indicator parameter is required" },
+      { error: getErrorMessage("indicator parameter is required", locale) },
       { status: 400 }
     );
   }
@@ -62,7 +72,7 @@ export async function GET(request: NextRequest) {
     // World Bank v2 API response structure:
     // [0] = metadata: { page, pages, total, per_page, ... }
     // [1] = dataArray: [{ indicator, country, date, value, ... }, ...]
-    let observations: any[] = [];
+    let observations: WorldBankObservation[] = [];
     if (Array.isArray(data) && data.length > 1 && Array.isArray(data[1])) {
       observations = data[1];
     }
@@ -72,16 +82,16 @@ export async function GET(request: NextRequest) {
     // to match FRED's date format (FRED uses YYYY-01-01 for annual/quarterly data)
     const formattedObservations = observations
       .filter(
-        (obs: { value: string | number | null }) =>
-          obs.value !== null && obs.value !== "" && obs.value !== undefined
+        (obs) =>
+          obs.value !== null && obs.value !== undefined
       )
-      .map((obs: { date: string; value: string | number }) => ({
+      .map((obs) => ({
         // Convert year "2024" to "2024-01-01" for consistency with FRED
         date: obs.date.length === 4 ? `${obs.date}-01-01` : obs.date,
-        value: typeof obs.value === "string" ? parseFloat(obs.value) : obs.value,
+        value: typeof obs.value === "string" ? parseFloat(obs.value) : (obs.value as number),
       }))
       // Sort by date ascending
-      .sort((a: { date: string }, b: { date: string }) =>
+      .sort((a, b) =>
         a.date.localeCompare(b.date)
       );
 
@@ -92,7 +102,7 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error("World Bank API error:", error);
     return NextResponse.json(
-      { error: "Failed to fetch data from World Bank" },
+      { error: getErrorMessage("Failed to fetch data from World Bank", locale) },
       { status: 500 }
     );
   }

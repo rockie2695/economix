@@ -13,6 +13,10 @@ import { Input } from "@/components/ui/input";
 import { useLocale } from "@/lib/LocaleContext";
 import type { Indicator } from "@/types";
 
+function getIndicatorName(indicator: Indicator, t: (key: string) => string): string {
+  return indicator.nameKey ? t(indicator.nameKey) : indicator.name;
+}
+
 interface IndicatorSelectorProps {
   indicators: Indicator[];
   selectedIds: string[];
@@ -91,7 +95,9 @@ export function IndicatorSelector({
   const filtered = indicators.filter(
     (ind) =>
       ind.name.toLowerCase().includes(search.toLowerCase()) ||
+      getIndicatorName(ind, t).toLowerCase().includes(search.toLowerCase()) ||
       ind.category.toLowerCase().includes(search.toLowerCase()) ||
+      t(ind.category).toLowerCase().includes(search.toLowerCase()) ||
       (ind.description &&
         ind.description.toLowerCase().includes(search.toLowerCase()))
   );
@@ -150,7 +156,7 @@ export function IndicatorSelector({
           <ChevronsUpDown className="h-4 w-4 shrink-0 opacity-50" />
         </div>
       </PopoverTrigger>
-      <PopoverContent className="w-[400px] p-0" align="start">
+      <PopoverContent className="w-[min(400px,90vw)] p-0" align="start">
         <div className="border-b p-2">
           <div className="flex items-center">
             <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
@@ -204,7 +210,7 @@ export function IndicatorSelector({
                             />
                             <div className="flex-1 min-w-0">
                               <div className="font-medium truncate flex items-center gap-1">
-                                {indicator.name}
+                                {getIndicatorName(indicator, t)}
                                 {isLoading && (
                                   <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />
                                 )}

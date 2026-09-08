@@ -21,6 +21,7 @@ import type {
   ChartDataPoint,
   ValueMode,
   DateRange,
+  StatsData,
 } from "@/types";
 
 export function processDataForChart(
@@ -60,7 +61,7 @@ export function processDataForChart(
 
       const existing = dateMap.get(point.date);
       if (existing) {
-        existing[series.indicatorId] = displayValue;
+        dateMap.set(point.date, { ...existing, [series.indicatorId]: displayValue });
       } else {
         dateMap.set(point.date, {
           date: point.date,
@@ -87,7 +88,7 @@ export function processDataForChart(
     );
 }
 
-export function calculateStats(allData: TimeSeriesData[]) {
+export function calculateStats(allData: TimeSeriesData[]): StatsData[] {
   return allData.map((series) => {
     const values = series.data.map((d) => d.value);
     const currentValue = values[values.length - 1] || 0;
@@ -118,8 +119,8 @@ export function calculateStats(allData: TimeSeriesData[]) {
       previousValue,
       change,
       changePercent,
-      min: Math.min(...values),
-      max: Math.max(...values),
+      min: values.reduce((a, b) => Math.min(a, b), Infinity),
+      max: values.reduce((a, b) => Math.max(a, b), -Infinity),
       unit: series.unit,
       countryOrCategoryKey,
     };
@@ -129,7 +130,7 @@ export function calculateStats(allData: TimeSeriesData[]) {
 // Scale factors for FRED indicators to convert raw API values to display values.
 // After simplifying unit strings (e.g. "Billions of Dollars" → "Dollars"),
 // we need to multiply the raw values by the appropriate factor for correct display.
-function getScaleFactor(unit: string, indicatorId: string): number {
+export function getScaleFactor(unit: string, indicatorId: string): number {
   switch (unit) {
     case "Dollars":
       // trade_balance and retail_sales were "Millions of Dollars"
@@ -156,7 +157,8 @@ function getScaleFactor(unit: string, indicatorId: string): number {
 async function fetchEconomicData(
   ids: string[],
   startDate: string,
-  endDate: string
+  endDate: string,
+  locale: string = "en"
 ): Promise<TimeSeriesData[]> {
   const results = await Promise.allSettled(
     ids.map(async (id) => {
@@ -169,6 +171,7 @@ async function fetchEconomicData(
           series_id: indicator.seriesId!,
           start_date: startDate,
           end_date: endDate,
+          locale,
         });
         url = `/api/fred?${params.toString()}`;
       } else if (indicator.source === "dbnomics") {
@@ -177,6 +180,7 @@ async function fetchEconomicData(
           provider_code: indicator.providerCode!,
           start_date: startDate,
           end_date: endDate,
+          locale,
         });
         url = `/api/dbnomics?${params.toString()}`;
       } else if (indicator.source === "worldbank") {
@@ -185,6 +189,7 @@ async function fetchEconomicData(
           indicator: indicator.seriesId!,
           country: indicator.countryCode || "US",
           date: `${startDate}:${endDate}`,
+          locale,
         });
         url = `/api/worldbank?${params.toString()}`;
       } else {
@@ -210,7 +215,7 @@ async function fetchEconomicData(
           ? result.observations.map((obs: { date: string; value: number }) => ({
               date: obs.date,
               value: obs.value * scaleFactor,
-            }))
+            })).filter((p: { date: string; value: number }) => !Number.isNaN(p.value))
           : [],
       } as TimeSeriesData;
     })
@@ -234,7 +239,21 @@ async function fetchEconomicData(
   return successful;
 }
 
-function readStateFromURL() {
+export function readStateFromURL() {
+  return getInitialUrlState();
+}
+
+function getDefaultDateRange(): DateRange {
+  const now = new Date();
+  const start = new Date(now);
+  start.setFullYear(start.getFullYear() - 1);
+  return {
+    startDate: start.toISOString().split("T")[0],
+    endDate: now.toISOString().split("T")[0],
+  };
+}
+
+function getInitialUrlState() {
   if (typeof window === "undefined") return null;
   const params = new URLSearchParams(window.location.search);
   const ids = params.get("indicators")?.split(",").filter(Boolean) ?? [];
@@ -243,54 +262,63 @@ function readStateFromURL() {
   const start = params.get("start");
   const end = params.get("end");
   const usd = params.get("usd") === "1";
-
+  if (ids.length === 0 && ids2.length === 0 && !mode && !start && !end && !usd) return null;
   return {
     selectedIds: ids,
     selectedIds2: ids2,
     valueMode: (mode && ["value", "valueChange", "percentage", "percentageChange"].includes(mode)
       ? mode
       : null) as ValueMode | null,
-    dateRange:
-      start && end ? { startDate: start, endDate: end } : null,
+    dateRange: start && end ? { startDate: start, endDate: end } : null,
     convertToUSD: usd,
   };
 }
 
-export function Dashboard() {
-  const { t } = useLocale();
-  const [mounted, setMounted] = React.useState(false);
+function getIndicatorDisplayName(
+  indicator: { name: string; nameKey?: string; country?: string } | undefined,
+  t: (key: string) => string,
+  convertToUSD?: boolean,
+  unit?: string
+): string {
+  if (!indicator) return "";
+  const baseName = indicator.nameKey
+    ? t(indicator.nameKey)
+    : indicator.name;
+  const countryPart = indicator.country
+    ? ` (${t(`country_${indicator.country}`)})`
+    : "";
+  const usdPart = convertToUSD && unit?.startsWith("USD") ? " (USD)" : "";
+  return `${baseName}${countryPart}${usdPart}`;
+}
 
-  const [selectedIds, setSelectedIds] = React.useState<string[]>([]);
-  const [selectedIds2, setSelectedIds2] = React.useState<string[]>([]);
-  const [valueMode, setValueMode] = React.useState<ValueMode>("value");
-  const [dateRange, setDateRange] = React.useState<DateRange>({
-    startDate: new Date(Date.now() - 365 * 24 * 60 * 60 * 1000)
-      .toISOString()
-      .split("T")[0],
-    endDate: new Date().toISOString().split("T")[0],
-  });
+export function Dashboard() {
+  const { t, locale } = useLocale();
+
+  const [urlState] = React.useState(getInitialUrlState);
+
+  const [selectedIds, setSelectedIds] = React.useState<string[]>(
+    urlState?.selectedIds ?? []
+  );
+  const [selectedIds2, setSelectedIds2] = React.useState<string[]>(
+    urlState?.selectedIds2 ?? []
+  );
+  const [valueMode, setValueMode] = React.useState<ValueMode>(
+    urlState?.valueMode ?? "value"
+  );
+  const [dateRange, setDateRange] = React.useState<DateRange>(
+    urlState?.dateRange ?? getDefaultDateRange()
+  );
   const [fetchErrors, setFetchErrors] = React.useState<Map<string, string>>(
     new Map()
   );
   const [loadingIds, setLoadingIds] = React.useState<Set<string>>(new Set());
-  const [convertToUSD, setConvertToUSD] = React.useState(false);
-
-  // Read from URL on mount
-  React.useEffect(() => {
-    const urlState = readStateFromURL();
-    if (urlState) {
-      if (urlState.selectedIds.length > 0) setSelectedIds(urlState.selectedIds);
-      if (urlState.selectedIds2 && urlState.selectedIds2.length > 0) setSelectedIds2(urlState.selectedIds2);
-      if (urlState.valueMode) setValueMode(urlState.valueMode);
-      if (urlState.dateRange) setDateRange(urlState.dateRange);
-      if (urlState.convertToUSD) setConvertToUSD(urlState.convertToUSD);
-    }
-    setMounted(true);
-  }, []);
+  const [convertToUSD, setConvertToUSD] = React.useState(
+    urlState?.convertToUSD ?? false
+  );
+  const fetchGenerationRef = React.useRef(0);
 
   // Write to URL on state change (debounced)
   React.useEffect(() => {
-    if (!mounted) return;
     const timer = setTimeout(() => {
       const params = new URLSearchParams();
       if (selectedIds.length > 0)
@@ -309,21 +337,24 @@ export function Dashboard() {
       );
     }, 500);
     return () => clearTimeout(timer);
-  }, [selectedIds, selectedIds2, valueMode, dateRange, convertToUSD, mounted]);
+  }, [selectedIds, selectedIds2, valueMode, dateRange, convertToUSD]);
 
   // SWR fetcher
   const fetcher = React.useCallback(
     async ([ids, start, end]: [string[], string, string]) => {
+      const gen = ++fetchGenerationRef.current;
       setLoadingIds(new Set(ids));
       setFetchErrors(new Map());
       try {
-        const data = await fetchEconomicData(ids, start, end);
+        const data = await fetchEconomicData(ids, start, end, locale);
         return data;
       } finally {
-        setLoadingIds(new Set());
+        if (fetchGenerationRef.current === gen) {
+          setLoadingIds(new Set());
+        }
       }
     },
-    []
+    [locale]
   );
 
   // Merge both sets of selected IDs for a single fetch
@@ -332,7 +363,7 @@ export function Dashboard() {
     [selectedIds, selectedIds2]
   );
 
-  const swrKey = mounted && allSelectedIds.length > 0
+  const swrKey = allSelectedIds.length > 0
     ? (`economic-data-${allSelectedIds.join(",")}-${dateRange.startDate}-${dateRange.endDate}` as const)
     : null;
 
@@ -341,7 +372,7 @@ export function Dashboard() {
     () => fetcher([allSelectedIds, dateRange.startDate, dateRange.endDate]),
     {
       revalidateOnFocus: false,
-      dedupingInterval: 60000,
+      dedupingInterval: 0,
     }
   );
 
@@ -446,18 +477,20 @@ export function Dashboard() {
     return calculateStats(convertedData).filter((s) => selectedIds2.includes(s.indicatorId));
   }, [convertedData, selectedIds2]);
 
+  const leftStats = React.useMemo(
+    () => stats.filter((s) => !selectedIds2.includes(s.indicatorId)),
+    [stats, selectedIds2]
+  );
+
   const selectedIndicators = React.useMemo(
     () =>
       convertedData
         .filter((i) => selectedIds.includes(i.indicatorId))
         .map((series, index) => {
           const indicator = indicators.find((i) => i.id === series.indicatorId);
-          const baseName = indicator?.country
-            ? `${indicator.name} (${t(`country_${indicator.country}`)})`
-            : indicator?.name || series.indicatorName;
-          const displayName = convertToUSD && series.unit.startsWith("USD")
-            ? `${baseName} (USD)`
-            : baseName;
+          const displayName = getIndicatorDisplayName(
+            indicator, t, convertToUSD, series.unit
+          ) || series.indicatorName;
           return {
             id: series.indicatorId,
             name: displayName,
@@ -473,12 +506,9 @@ export function Dashboard() {
         .filter((i) => selectedIds2.includes(i.indicatorId))
         .map((series, index) => {
           const indicator = indicators.find((i) => i.id === series.indicatorId);
-          const baseName = indicator?.country
-            ? `${indicator.name} (${t(`country_${indicator.country}`)})`
-            : indicator?.name || series.indicatorName;
-          const displayName = convertToUSD && series.unit.startsWith("USD")
-            ? `${baseName} (USD)`
-            : baseName;
+          const displayName = getIndicatorDisplayName(
+            indicator, t, convertToUSD, series.unit
+          ) || series.indicatorName;
           return {
             id: series.indicatorId,
             name: displayName,
@@ -596,12 +626,10 @@ export function Dashboard() {
         )}
 
         {isLoading && (
-          <div className="flex items-center justify-center py-8">
-            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-          </div>
+          <div className="h-[300px] sm:h-[350px] lg:h-[400px] rounded-lg bg-muted animate-pulse" />
         )}
 
-{!isLoading && stats.length > 0 && <StatsCards stats={stats} />}
+{!isLoading && leftStats.length > 0 && <StatsCards stats={leftStats} />}
 {!isLoading && stats2.length > 0 && <StatsCards stats={stats2} />}
 
         {!isLoading && (
