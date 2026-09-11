@@ -72,8 +72,9 @@ export interface TimeSeriesData {
  * - "valueChange": absolute change from previous data point
  * - "percentage": percentage change from previous data point
  * - "percentageChange": alias for percentage
+ * - "yoyGrowth": year-over-year growth rate (comparison with same period last year)
  */
-export type ValueMode = "value" | "valueChange" | "percentage" | "percentageChange";
+export type ValueMode = "value" | "valueChange" | "percentage" | "percentageChange" | "yoyGrowth";
 
 /** Date range for API queries (ISO date strings) */
 export interface DateRange {

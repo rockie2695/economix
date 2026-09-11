@@ -10,9 +10,12 @@ import {
   CartesianGrid,
   Tooltip,
   Legend,
+  ReferenceLine,
+  Label,
 } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useLocale } from "@/lib/LocaleContext";
+import { getVisibleEvents } from "@/lib/historical-events";
 import type { ChartDataPoint, ValueMode } from "@/types";
 
 interface DataChartProps {
@@ -21,13 +24,17 @@ interface DataChartProps {
   rightIndicators?: { id: string; name: string; color: string }[];
   valueMode: ValueMode;
   title?: string;
+  showEvents?: boolean;
+  showMovingAverage?: boolean;
+  movingAverageWindow?: number;
+  forecastData?: ChartDataPoint[];
 }
 
 const formatValue = (value: number | undefined | null, mode: ValueMode): string => {
   if (value === undefined || value === null || Number.isNaN(value)) {
     return "—";
   }
-  if (mode === "percentage" || mode === "percentageChange") {
+  if (mode === "percentage" || mode === "percentageChange" || mode === "yoyGrowth") {
     return `${value.toFixed(2)}%`;
   }
   // Abbreviate large numbers (e.g. 29298013000000 → 29.3T, 331578104 → 331.6M)
@@ -77,9 +84,54 @@ export function DataChart({
   rightIndicators = [],
   valueMode,
   title,
+  showEvents = false,
+  showMovingAverage = false,
+  movingAverageWindow = 3,
+  forecastData,
 }: DataChartProps) {
   const { t } = useLocale();
   const displayTitle = title || t("timeSeriesData");
+
+  // Get visible historical events
+  const visibleEvents = React.useMemo(() => {
+    if (!showEvents || data.length === 0) return [];
+    const dates = data.map((d) => d.date as string).sort();
+    return getVisibleEvents(dates[0], dates[dates.length - 1]);
+  }, [showEvents, data]);
+
+  // Compute moving averages for each indicator
+  const movingAverages = React.useMemo(() => {
+    if (!showMovingAverage) return {};
+    const result: Record<string, (number | null)[]> = {};
+    const allInds = [...indicators, ...rightIndicators];
+    for (const ind of allInds) {
+      const values = data.map((d) => d[ind.id] as number);
+      const ma: (number | null)[] = [];
+      for (let i = 0; i < values.length; i++) {
+        if (i < movingAverageWindow - 1) {
+          ma.push(null);
+        } else {
+          let sum = 0;
+          for (let j = i - movingAverageWindow + 1; j <= i; j++) {
+            sum += values[j];
+          }
+          ma.push(sum / movingAverageWindow);
+        }
+      }
+      result[ind.id] = ma;
+    }
+    return result;
+  }, [showMovingAverage, data, indicators, rightIndicators, movingAverageWindow]);
+
+  // Merge forecast data if provided
+  const chartData = React.useMemo(() => {
+    if (!forecastData || forecastData.length === 0) return data;
+    // Add forecast points after the real data
+    const forecastPoints = forecastData.filter(
+      (fd) => !data.some((d) => d.date === fd.date)
+    );
+    return [...data, ...forecastPoints];
+  }, [data, forecastData]);
   return (
     <Card>
       <CardHeader>
@@ -133,6 +185,26 @@ export function DataChart({
                 )}
                 <Tooltip content={<CustomTooltip valueMode={valueMode} />} />
                 <Legend />
+                {/* Historical events as vertical reference lines */}
+                {visibleEvents.map((event) => (
+                  <ReferenceLine
+                    key={event.date}
+                    x={event.date}
+                    yAxisId="left"
+                    stroke="var(--muted-foreground)"
+                    strokeDasharray="3 3"
+                    strokeOpacity={0.5}
+                  >
+                    <Label
+                      value={event.label}
+                      position="top"
+                      fontSize={9}
+                      fill="var(--muted-foreground)"
+                      angle={-45}
+                    />
+                  </ReferenceLine>
+                ))}
+                {/* Main indicator lines */}
                 {indicators.map((indicator) => (
                   <Line
                     key={indicator.id}
@@ -147,6 +219,23 @@ export function DataChart({
                     connectNulls
                   />
                 ))}
+                {/* Moving average lines */}
+                {showMovingAverage && indicators.map((indicator) => (
+                  <Line
+                    key={`ma-${indicator.id}`}
+                    yAxisId="left"
+                    type="monotone"
+                    dataKey={`ma_${indicator.id}`}
+                    name={`${indicator.name} MA(${movingAverageWindow})`}
+                    stroke={indicator.color}
+                    strokeWidth={1.5}
+                    strokeDasharray="2 2"
+                    dot={false}
+                    connectNulls
+                    strokeOpacity={0.6}
+                  />
+                ))}
+                {/* Right axis indicator lines */}
                 {rightIndicators.map((indicator) => (
                   <Line
                     key={indicator.id}
@@ -160,6 +249,22 @@ export function DataChart({
                     dot={false}
                     activeDot={{ r: 6, strokeWidth: 2 }}
                     connectNulls
+                  />
+                ))}
+                {/* Forecast lines */}
+                {forecastData && forecastData.length > 0 && indicators.map((indicator) => (
+                  <Line
+                    key={`forecast-${indicator.id}`}
+                    yAxisId="left"
+                    type="monotone"
+                    dataKey={`forecast_${indicator.id}`}
+                    name={`${indicator.name} (${t("forecast")})`}
+                    stroke={indicator.color}
+                    strokeWidth={1.5}
+                    strokeDasharray="8 4"
+                    dot={false}
+                    connectNulls
+                    strokeOpacity={0.5}
                   />
                 ))}
               </LineChart>

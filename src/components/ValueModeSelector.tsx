@@ -39,6 +39,11 @@ export function ValueModeSelector({ value, onChange }: ValueModeSelectorProps) {
       label: t("percentChange"),
       description: t("percentChangeDescription"),
     },
+    {
+      value: "yoyGrowth",
+      label: t("yoyGrowth"),
+      description: t("yoyGrowthDescription"),
+    },
   ];
 
   return (

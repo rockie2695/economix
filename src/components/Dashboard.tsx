@@ -10,12 +10,15 @@ import { ValueModeSelector } from "./ValueModeSelector";
 import { DataChart } from "./DataChart";
 import { StatsCards } from "./StatsCards";
 import { CorrelationMatrix } from "./CorrelationMatrix";
+import { ScatterPlot } from "./ScatterPlot";
+import { DataTable } from "./DataTable";
 import { LanguageSwitcher } from "./LanguageSwitcher";
 import { ExportButton } from "./ExportButton";
 import { USDConvertToggle } from "./USDConvertToggle";
 import { indicators } from "@/lib/indicators";
 import { CHART_COLORS } from "@/lib/constants";
 import { useLocale } from "@/lib/LocaleContext";
+import { forecast } from "@/lib/forecast";
 import type {
   TimeSeriesData,
   ChartDataPoint,
@@ -52,6 +55,33 @@ export function processDataForChart(
           displayValue =
             baseValue !== 0
               ? ((point.value - baseValue) / baseValue) * 100
+              : 0;
+          break;
+        }
+        case "yoyGrowth": {
+          // Year-over-year: compare with same period last year
+          // Find the data point approximately 1 year ago (365 days)
+          const currentDate = new Date(point.date);
+          const yearAgoDate = new Date(currentDate);
+          yearAgoDate.setFullYear(yearAgoDate.getFullYear() - 1);
+          const yearAgoStr = yearAgoDate.toISOString().split("T")[0];
+
+          // Find closest data point to 1 year ago
+          let yearAgoValue: number | null = null;
+          let minDiff = Infinity;
+          for (let j = 0; j < series.data.length; j++) {
+            const diff = Math.abs(
+              new Date(series.data[j].date).getTime() - yearAgoDate.getTime()
+            );
+            if (diff < minDiff) {
+              minDiff = diff;
+              yearAgoValue = series.data[j].value;
+            }
+          }
+
+          displayValue =
+            yearAgoValue !== null && yearAgoValue !== 0
+              ? ((point.value - yearAgoValue) / yearAgoValue) * 100
               : 0;
           break;
         }
@@ -266,7 +296,7 @@ function getInitialUrlState() {
   return {
     selectedIds: ids,
     selectedIds2: ids2,
-    valueMode: (mode && ["value", "valueChange", "percentage", "percentageChange"].includes(mode)
+    valueMode: (mode && ["value", "valueChange", "percentage", "percentageChange", "yoyGrowth"].includes(mode)
       ? mode
       : null) as ValueMode | null,
     dateRange: start && end ? { startDate: start, endDate: end } : null,
@@ -315,6 +345,9 @@ export function Dashboard() {
   const [convertToUSD, setConvertToUSD] = React.useState(
     urlState?.convertToUSD ?? false
   );
+  const [showEvents, setShowEvents] = React.useState(false);
+  const [showMovingAverage, setShowMovingAverage] = React.useState(false);
+  const [showForecast, setShowForecast] = React.useState(false);
   const fetchGenerationRef = React.useRef(0);
 
   // Write to URL on state change (debounced)
@@ -482,6 +515,41 @@ export function Dashboard() {
     [stats, selectedIds2]
   );
 
+  // Compute forecast data (8 periods ahead)
+  const forecastChartData = React.useMemo(() => {
+    if (!showForecast || chartData.length < 4) return [];
+    const allIds = [...selectedIds, ...selectedIds2];
+    const result: ChartDataPoint[] = [];
+    const lastDate = chartData[chartData.length - 1]?.date;
+
+    // For each indicator, compute forecast
+    for (const id of allIds) {
+      const values = chartData
+        .map((d) => d[id] as number)
+        .filter((v) => v != null && !Number.isNaN(v));
+      if (values.length < 4) continue;
+      const forecasted = forecast(values, 8);
+
+      // Create future data points
+      const lastDateObj = new Date(lastDate as string);
+      for (let i = values.length; i < forecasted.length; i++) {
+        const futureDate = new Date(lastDateObj);
+        futureDate.setMonth(futureDate.getMonth() + (i - values.length + 1));
+        const dateStr = futureDate.toISOString().split("T")[0];
+        const existing = result.find((r) => r.date === dateStr);
+        if (existing) {
+          existing[`forecast_${id}`] = forecasted[i];
+        } else {
+          result.push({
+            date: dateStr,
+            [`forecast_${id}`]: forecasted[i],
+          } as ChartDataPoint);
+        }
+      }
+    }
+    return result;
+  }, [showForecast, chartData, selectedIds, selectedIds2]);
+
   const selectedIndicators = React.useMemo(
     () =>
       convertedData
@@ -600,6 +668,36 @@ export function Dashboard() {
           <ValueModeSelector value={valueMode} onChange={setValueMode} />
         </div>
 
+        {/* Chart enhancement toggles */}
+        {chartData.length > 0 && (
+          <div className="flex flex-wrap gap-2">
+            <Button
+              variant={showEvents ? "default" : "outline"}
+              size="sm"
+              onClick={() => setShowEvents(!showEvents)}
+              className="text-xs"
+            >
+              {t("showEvents")}
+            </Button>
+            <Button
+              variant={showMovingAverage ? "default" : "outline"}
+              size="sm"
+              onClick={() => setShowMovingAverage(!showMovingAverage)}
+              className="text-xs"
+            >
+              {t("showMovingAverage")}
+            </Button>
+            <Button
+              variant={showForecast ? "default" : "outline"}
+              size="sm"
+              onClick={() => setShowForecast(!showForecast)}
+              className="text-xs"
+            >
+              {t("showForecast")}
+            </Button>
+          </div>
+        )}
+
         {fetchErrors.size > 0 && (
           <div className="rounded-lg border border-yellow-500/50 bg-yellow-500/10 p-4 space-y-2">
             <div className="flex items-center gap-2 text-sm text-yellow-500 font-medium">
@@ -644,6 +742,10 @@ export function Dashboard() {
                   ? selectedIndicators.map((i) => i.name).join(" vs ")
                   : t("timeSeriesData")
               }
+              showEvents={showEvents}
+              showMovingAverage={showMovingAverage}
+              movingAverageWindow={3}
+              forecastData={forecastChartData.length > 0 ? forecastChartData : undefined}
             />
             {chartData.length > 0 &&
               (selectedIndicators.length + selectedIndicators2.length >= 2) && (
@@ -651,6 +753,24 @@ export function Dashboard() {
                   data={chartData}
                   indicators={selectedIndicators}
                   rightIndicators={selectedIndicators2}
+                />
+              )}
+            {chartData.length > 0 &&
+              (selectedIndicators.length + selectedIndicators2.length >= 2) && (
+                <ScatterPlot
+                  data={chartData}
+                  indicators={selectedIndicators}
+                  rightIndicators={selectedIndicators2}
+                  valueMode={valueMode}
+                />
+              )}
+            {chartData.length > 0 &&
+              (selectedIndicators.length + selectedIndicators2.length > 0) && (
+                <DataTable
+                  data={chartData}
+                  indicators={selectedIndicators}
+                  rightIndicators={selectedIndicators2}
+                  valueMode={valueMode}
                 />
               )}
           </div>

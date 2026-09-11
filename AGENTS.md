@@ -33,10 +33,12 @@ src/
 │   ├── Dashboard.tsx             # Main orchestrator (SWR, URL state, Promise.allSettled)
 │   ├── IndicatorSelector.tsx     # Searchable multi-select popover (grouped, loading/error, i18n names)
 │   ├── DatePickerRange.tsx       # Date range inputs + quick presets
-│   ├── ValueModeSelector.tsx     # Segmented control (4 modes with tooltips)
-│   ├── DataChart.tsx             # Recharts LineChart wrapper (responsive height, dual Y-axis)
+│   ├── ValueModeSelector.tsx     # Segmented control (5 modes with tooltips: value, change, %, % change, YoY)
+│   ├── DataChart.tsx             # Recharts LineChart (responsive, dual Y-axis, events overlay, MA, forecast)
 │   ├── StatsCards.tsx            # Stats cards grid (theme-aware colors)
 │   ├── CorrelationMatrix.tsx     # Correlation matrix with i18n'd names
+│   ├── ScatterPlot.tsx           # Scatter plot showing correlation between two indicators
+│   ├── DataTable.tsx             # Paginated data table with color-coded columns
 │   ├── LanguageSwitcher.tsx      # 繁中/EN toggle button
 │   ├── ThemeToggle.tsx           # Dark/light theme toggle
 │   ├── ExportButton.tsx          # CSV export button (csvEscape for proper quoting)
@@ -44,21 +46,25 @@ src/
 │   ├── Providers.tsx             # Client-side context providers (Locale + Theme)
 │   └── ui/                       # shadcn/ui primitives (button, card, tooltip, etc.)
 ├── lib/
-│   ├── indicators.ts             # Indicator definitions array (52 indicators, nameKey for i18n)
-│   ├── i18n.ts                   # Translation dictionaries (en/zh-TW, 93 keys including indicator names)
+│   ├── indicators.ts             # Indicator definitions array (100+ indicators, nameKey for i18n)
+│   ├── i18n.ts                   # Translation dictionaries (en/zh-TW, 120+ keys including indicator names)
 │   ├── api-errors.ts             # Locale-aware API error messages
 │   ├── LocaleContext.tsx          # React Context for locale state
 │   ├── ThemeContext.tsx           # React Context for theme state
 │   ├── constants.ts              # Shared constants (CHART_COLORS)
 │   ├── correlation.ts            # Pearson correlation computation
+│   ├── forecast.ts               # Linear regression, moving average, forecast utilities
+│   ├── historical-events.ts      # Historical economic events for chart overlay
 │   └── utils.ts                  # cn() merge helper
 ├── types/
-│   └── index.ts                  # All TypeScript interfaces
+│   └── index.ts                  # All TypeScript interfaces (ValueMode includes "yoyGrowth")
 └── __tests__/
     ├── i18n.test.ts              # Translation key parity tests
     ├── indicators.test.ts        # Indicator structure validation
     ├── chart-data.test.ts        # processDataForChart unit tests
     ├── stats.test.ts             # calculateStats unit tests
+    ├── correlation.test.ts       # Pearson correlation tests
+    ├── forecast.test.ts          # Linear regression, moving average, forecast tests
     ├── api-errors.test.ts        # API error message tests
     └── url-state.test.ts         # URL state parsing tests
 ```
@@ -97,7 +103,7 @@ interface TimeSeriesData {
 }
 
 // How to transform values for display
-type ValueMode = "value" | "valueChange" | "percentage" | "percentageChange";
+type ValueMode = "value" | "valueChange" | "percentage" | "percentageChange" | "yoyGrowth";
 
 // Date range for API queries
 interface DateRange {
@@ -148,6 +154,7 @@ User selects indicators
 | `valueChange` | `point.value - prev.value` | Absolute change |
 | `percentage` | `((point.value - prev.value) / prev.value) * 100` | Period-over-period % change |
 | `percentageChange` | `((point.value - first.value) / first.value) * 100` | Cumulative net change from start |
+| `yoyGrowth` | `((point.value - yearAgo.value) / yearAgo.value) * 100` | Year-over-year growth rate |
 
 ### Chart Color Assignment
 

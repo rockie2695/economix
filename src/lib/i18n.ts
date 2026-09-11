@@ -110,7 +110,42 @@ export type TranslationKey =
   | "none"
   | "weak_negative"
   | "moderate_negative"
-  | "strong_negative";
+  | "strong_negative"
+  // Value mode
+  | "yoyGrowth"
+  | "yoyGrowthDescription"
+  // Chart enhancements
+  | "scatterPlot"
+  | "dataTable"
+  | "date"
+  | "showing"
+  | "of"
+  | "previous"
+  | "next"
+  // Chart toggles
+  | "showEvents"
+  | "showMovingAverage"
+  | "showForecast"
+  | "forecast"
+  | "description"
+  // Historical events
+  | "eventDotCom"
+  | "event911"
+  | "eventGreatRecession"
+  | "eventLehman"
+  | "eventObamacare"
+  | "eventTaperTantrum"
+  | "eventFedHike2015"
+  | "event2018Selloff"
+  | "eventCOVID"
+  | "eventCOVIDWHO"
+  | "eventCOVIDBottom"
+  | "eventRussiaUkraine"
+  | "eventFedHike2022"
+  | "eventSVB"
+  // Dual Y-axis
+  | "dualYAxis"
+  | "dualYAxisDescription";
 
 export const translations: Record<Locale, Record<TranslationKey, string>> = {
   en: {
@@ -210,6 +245,36 @@ export const translations: Record<Locale, Record<TranslationKey, string>> = {
     weak_negative: "Weak Negative",
     moderate_negative: "Moderate Negative",
     strong_negative: "Strong Negative",
+    yoyGrowth: "YoY",
+    yoyGrowthDescription: "Year-over-year growth rate compared to same period last year",
+    scatterPlot: "Scatter Plot",
+    dataTable: "Data Table",
+    date: "Date",
+    showing: "Showing",
+    of: "of",
+    previous: "Previous",
+    next: "Next",
+    showEvents: "Events",
+    showMovingAverage: "Trend",
+    showForecast: "Forecast",
+    forecast: "Forecast",
+    description: "Description",
+    eventDotCom: "Dot-com Recession",
+    event911: "9/11 Attacks",
+    eventGreatRecession: "Great Recession",
+    eventLehman: "Lehman Brothers",
+    eventObamacare: "Obamacare",
+    eventTaperTantrum: "Taper Tantrum",
+    eventFedHike2015: "Fed Rate Hike",
+    event2018Selloff: "Stock Selloff",
+    eventCOVID: "COVID-19",
+    eventCOVIDWHO: "WHO Pandemic",
+    eventCOVIDBottom: "COVID Bottom",
+    eventRussiaUkraine: "Russia-Ukraine War",
+    eventFedHike2022: "Fed Rate Hike Cycle",
+    eventSVB: "SVB Collapse",
+    dualYAxis: "Dual Y-Axis",
+    dualYAxisDescription: "Compare indicators with different scales using two Y-axes",
   },
   "zh-TW": {
     appTitle: "經濟指標",
@@ -307,6 +372,36 @@ export const translations: Record<Locale, Record<TranslationKey, string>> = {
     weak_negative: "弱負相關",
     moderate_negative: "中度負相關",
     strong_negative: "強負相關",
+    yoyGrowth: "年增率",
+    yoyGrowthDescription: "與去年同期相比的年增率",
+    scatterPlot: "散佈圖",
+    dataTable: "資料表格",
+    date: "日期",
+    showing: "顯示",
+    of: "共",
+    previous: "上一頁",
+    next: "下一頁",
+    showEvents: "事件",
+    showMovingAverage: "趨勢",
+    showForecast: "預測",
+    forecast: "預測",
+    description: "說明",
+    eventDotCom: "網路泡沫衰退",
+    event911: "9/11 事件",
+    eventGreatRecession: "大衰退",
+    eventLehman: "雷曼兄弟倒閉",
+    eventObamacare: "歐巴馬健保",
+    eventTaperTantrum: "縮減購債恐慌",
+    eventFedHike2015: "聯準會升息",
+    event2018Selloff: "股市拋售",
+    eventCOVID: "COVID-19 疫情",
+    eventCOVIDWHO: "WHO 宣布大流行",
+    eventCOVIDBottom: "疫情市場底部",
+    eventRussiaUkraine: "俄烏戰爭",
+    eventFedHike2022: "聯準會升息週期",
+    eventSVB: "矽谷銀行倒閉",
+    dualYAxis: "雙 Y 軸",
+    dualYAxisDescription: "使用兩個 Y 軸比較不同量級的指標",
   },
 };
 

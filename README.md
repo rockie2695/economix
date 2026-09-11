@@ -51,6 +51,13 @@ open http://localhost:3000
 - **Searchable indicator picker** — Filter by name, category, or description with per-indicator loading/error states
 - **Date range control** — Custom date pickers + quick presets (1Y, 5Y, 10Y, All)
 - **4 display modes** — Raw value, value change, percentage, cumulative percentage change
+- **5 display modes** — Raw value, value change, percentage, cumulative percentage change, year-over-year growth
+- **Correlation analysis** — Pearson correlation matrix showing relationships between selected indicators
+- **Scatter plot** — Visualize correlation between two indicators as a scatter plot with r-value
+- **Historical events overlay** — Mark recessions, crises, and major events on the chart timeline
+- **Moving average trend line** — Optional 3-period moving average overlay to smooth noisy data
+- **Forecast** — Linear regression extrapolation 8 periods into the future (dashed line)
+- **Data table** — Tabular view of raw chart data with pagination
 - **Mode tooltips** — Hover over display mode buttons to see what each mode shows
 - **Interactive tooltips** — Hover over chart lines to see exact values
 - **Stats cards** — Current value, change %, and trend arrows at a glance
@@ -492,6 +499,51 @@ A toggle button that switches between dark and light themes. Theme is persisted 
 ### `ExportButton.tsx`
 
 A button that exports the current chart data to CSV format. Properly escapes values containing commas or quotes. Downloads as `economix-YYYY-MM-DD.csv`.
+
+### `CorrelationMatrix.tsx`
+
+Displays pairwise Pearson correlation coefficients between all selected indicators. Shows:
+- Correlation coefficient (r value) for each pair
+- Relationship type (strong/moderate/weak positive/negative)
+- Color-coded cards (green for positive, red for negative correlations)
+
+### `ScatterPlot.tsx`
+
+Plots the first two selected indicators against each other on an X-Y scatter plot. Includes:
+- X-axis = first indicator, Y-axis = second indicator
+- Correlation coefficient (r) shown in the title
+- Responsive container with tooltips
+
+### `DataTable.tsx`
+
+Paginated tabular view of the raw chart data. Features:
+- Most recent dates shown first
+- Color-coded column headers matching chart line colors
+- 20 rows per page with Previous/Next navigation
+
+---
+
+## Chart Enhancement Toggles
+
+Three toggle buttons appear above the chart when data is loaded:
+
+| Toggle | Effect |
+|--------|--------|
+| **Events** | Shows vertical dashed lines for historical events (recessions, crises, policy changes) |
+| **Trend** | Adds a 3-period moving average line for each indicator (dashed, semi-transparent) |
+| **Forecast** | Extrapolates each indicator 8 periods into the future using linear regression (dashed line) |
+
+---
+
+## Value Modes
+
+| Mode | Formula | Description |
+|------|---------|-------------|
+| **Value** | raw value | Default — shows the actual numerical value |
+| **Change** | `value[i] - value[i-1]` | Absolute change from previous data point |
+| **%** | `((value[i] - value[i-1]) / value[i-1]) * 100` | Percentage change from previous |
+| **% Change** | `((value[i] - value[0]) / value[0]) * 100` | Cumulative change from period start |
+| **YoY** | `((value[i] - value[1yr_ago]) / value[1yr_ago]) * 100` | Year-over-year growth rate |
 
 ---
 
