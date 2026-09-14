@@ -8,13 +8,15 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 <!-- END:nextjs-agent-rules -->
 
-# AGENTS.md — AI Agent Context for Economix
+# AGENTS.md — AI Agent Context for Economix / AI 代理上下文
 
-## Project Overview
+## Project Overview / 專案概述
 
 Economix is a macroeconomic data visualization dashboard. It fetches data from FRED, DBnomics, and World Bank APIs, displays time-series charts, and computes basic statistics. Supports 繁中/English language switching and dark/light themes.
 
-**Stack**: Next.js 16 (App Router), TypeScript, Tailwind CSS 4, shadcn/ui (Base UI), Recharts 3, React Compiler
+Economix 是一個總體經濟資料視覺化儀表板。從 FRED、DBnomics 與 World Bank API 抓取資料，顯示時間序列圖表並計算基本統計。支援繁體中文/英文切換及深色/淺色主題。
+
+**Stack / 技術堆疊**: Next.js 16 (App Router), TypeScript, Tailwind CSS 4, shadcn/ui (Base UI), Recharts 3, React Compiler
 
 ## File Map
 

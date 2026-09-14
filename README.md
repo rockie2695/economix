@@ -1,585 +1,322 @@
-# Economix — Economic Data Dashboard
+# Economix — Economic Data Dashboard / 經濟資料儀表板
 
-A modern dashboard for visualizing macroeconomic data from **FRED**, **DBnomics**, and **World Bank** APIs. Built with Next.js App Router, TypeScript, Tailwind CSS, Recharts, and React Compiler. Supports **繁中/English** language switching and dark/light themes.
+A modern dashboard for visualizing macroeconomic data from **FRED**, **DBnomics**, and **World Bank** APIs.
+現代化總體經濟資料視覺化儀表板，資料來自 **FRED**、**DBnomics** 與 **World Bank** API。
 
----
+Built with Next.js 16 App Router, TypeScript, Tailwind CSS 4, shadcn/ui, Recharts 3, and React Compiler.
+使用 Next.js 16 App Router、TypeScript、Tailwind CSS 4、shadcn/ui、Recharts 3 及 React Compiler 建構。
 
-## Table of Contents
-
-- [Quick Start](#quick-start)
-- [Features](#features)
-- [Tech Stack](#tech-stack)
-- [Project Structure](#project-structure)
-- [Getting an API Key](#getting-an-api-key)
-- [Environment Variables](#environment-variables)
-- [Available Indicators](#available-indicators)
-- [Architecture](#architecture)
-- [API Routes](#api-routes)
-- [Components](#components)
-- [Internationalization](#internationalization)
-- [Adding New Indicators](#adding-new-indicators)
-- [Testing](#testing)
-- [Deployment](#deployment)
+Supports **繁中/English** language switching and dark/light themes. 支援**繁體中文/英文**切換及深色/淺色主題。
 
 ---
 
-## Quick Start
+## Table of Contents / 目錄
+
+- [Quick Start / 快速開始](#quick-start--快速開始)
+- [Features / 功能特色](#features--功能特色)
+- [Tech Stack / 技術架構](#tech-stack--技術架構)
+- [Project Structure / 專案結構](#project-structure--專案結構)
+- [Getting an API Key / 取得 API 金鑰](#getting-an-api-key--取得-api-金鑰)
+- [Environment Variables / 環境變數](#environment-variables--環境變數)
+- [Architecture / 系統架構](#architecture--系統架構)
+- [API Routes / API 路由](#api-routes--api-路由)
+- [Components / 元件](#components--元件)
+- [Value Modes / 數值模式](#value-modes--數值模式)
+- [Chart Enhancements / 圖表增強](#chart-enhancements--圖表增強)
+- [Adding New Indicators / 新增指標](#adding-new-indicators--新增指標)
+- [Testing / 測試](#testing--測試)
+- [Deployment / 部署](#deployment--部署)
+
+---
+
+## Quick Start / 快速開始
 
 ```bash
-# 1. Install dependencies
+# 1. Install dependencies / 安裝依賴
 npm install
 
-# 2. Set up environment variables
+# 2. Set up environment variables / 設定環境變數
 cp .env.example .env.local
-# Edit .env.local and add your FRED API key
+# Edit .env.local and add your FRED API key / 編輯 .env.local 加入你的 FRED API 金鑰
 
-# 3. Run the dev server
+# 3. Run the dev server / 啟動開發伺服器
 npm run dev
 
-# 4. Open in browser
+# 4. Open in browser / 開啟瀏覽器
 open http://localhost:3000
 ```
 
----
+### Docker
 
-## Features
+```bash
+# Build and run with Docker Compose / 使用 Docker Compose 建構並運行
+docker compose up --build
 
-- **Multi-indicator comparison** — Select one or more indicators to overlay on the same chart
-- **Dual Y-axis** — Compare indicators with different scales using left and right Y-axes
-- **10 countries + global** — US, Euro Area, Japan, China, UK, India, Brazil, South Korea, Canada, Australia + global commodities & recession risk
-- **Country-specific grouping** — Indicators organized by country and global categories
-- **Searchable indicator picker** — Filter by name, category, or description with per-indicator loading/error states
-- **Date range control** — Custom date pickers + quick presets (1Y, 5Y, 10Y, All)
-- **4 display modes** — Raw value, value change, percentage, cumulative percentage change
-- **5 display modes** — Raw value, value change, percentage, cumulative percentage change, year-over-year growth
-- **Correlation analysis** — Pearson correlation matrix showing relationships between selected indicators
-- **Scatter plot** — Visualize correlation between two indicators as a scatter plot with r-value
-- **Historical events overlay** — Mark recessions, crises, and major events on the chart timeline
-- **Moving average trend line** — Optional 3-period moving average overlay to smooth noisy data
-- **Forecast** — Linear regression extrapolation 8 periods into the future (dashed line)
-- **Data table** — Tabular view of raw chart data with pagination
-- **Mode tooltips** — Hover over display mode buttons to see what each mode shows
-- **Interactive tooltips** — Hover over chart lines to see exact values
-- **Stats cards** — Current value, change %, and trend arrows at a glance
-- **i18n support** — Switch between 繁中 and English with one click
-- **Dark/light theme** — Toggle between themes, persisted to localStorage
-- **Export to CSV** — One-click download of chart data
-- **URL state persistence** — Shareable links with selected indicators, dates, and display mode
-- **Recession risk indicators** — Yield curve (10Y-2Y, 10Y-3M) and Leading Economic Index
-- **Resilient fetching** — Promise.allSettled with per-indicator error handling
-- **React Compiler** — Automatic memoization via babel-plugin-react-compiler
-- **Responsive** — Works on desktop, tablet, and mobile
+# Or build manually / 或手動建構
+docker build -t economix .
+docker run -p 3000:3000 --env-file .env.local economix
+```
 
 ---
 
-## Tech Stack
+## Features / 功能特色
 
-| Layer | Technology |
+- **Multi-indicator comparison / 多指標比較** — Select one or more indicators to overlay on the same chart / 選擇一個或多個指標疊加顯示在同一張圖表上
+- **Dual Y-axis / 雙 Y 軸** — Compare indicators with different scales using left and right Y-axes / 使用左右 Y 軸比較不同量級的指標
+- **10 countries + global / 10 個國家 + 全球** — US, Euro Area, Japan, China, UK, India, Brazil, South Korea, Canada, Australia + global commodities & recession risk / 美國、歐元區、日本、中國、英國、印度、巴西、南韓、加拿大、澳洲 + 全球大宗商品與衰退風險
+- **Correlation analysis / 相關性分析** — Pearson correlation matrix showing relationships between selected indicators / 皮爾森相關係數矩陣，顯示所選指標之間的關係
+- **Scatter plot / 散佈圖** — Visualize correlation between two indicators as a scatter plot with r-value / 以散佈圖視覺化兩個指標之間的相關性，顯示 r 值
+- **Historical events overlay / 歷史事件標記** — Mark recessions, crises, and major events on the chart timeline / 在圖表時間軸上標記衰退、危機與重大事件
+- **Moving average trend line / 移動平均趨勢線** — Optional 3-period moving average overlay to smooth noisy data / 可選的 3 期移動平均疊加，平滑波動數據
+- **Forecast / 預測** — Linear regression extrapolation 8 periods into the future (dashed line) / 線性回歸外推未來 8 期（虛線顯示）
+- **Data table / 資料表格** — Tabular view of raw chart data with pagination / 圖表原始資料的分頁表格檢視
+- **5 display modes / 5 種顯示模式** — Raw value, value change, %, cumulative % change, YoY growth / 原始值、變動值、百分比、累計百分比變動、年增率
+- **Searchable indicator picker / 可搜尋指標選擇器** — Filter by name, category, or description / 依名稱、類別或描述篩選
+- **Date range control / 日期範圍控制** — Custom date pickers + quick presets (1Y, 5Y, 10Y, All) / 自訂日期選擇器 + 快速預設（1年、5年、10年、全部）
+- **Stats cards / 統計卡片** — Current value, change %, and trend arrows at a glance / 當前值、變動百分比與趨勢箭頭一目了然
+- **i18n support / 國際化** — Switch between 繁中 and English with one click / 一鍵切換繁體中文與英文
+- **Dark/light theme / 深色/淺色主題** — Toggle between themes, persisted to localStorage / 切換主題，持久化至 localStorage
+- **Export to CSV / 匯出 CSV** — One-click download of chart data / 一鍵下載圖表資料
+- **URL state persistence / URL 狀態持久化** — Shareable links with selected indicators, dates, and display mode / 可分享連結包含所選指標、日期與顯示模式
+- **Resilient fetching / 穩健抓取** — Promise.allSettled with per-indicator error handling / 使用 Promise.allSettled 搭配逐指標錯誤處理
+- **React Compiler / React 編譯器** — Automatic memoization / 自動記憶化
+- **Responsive / 響應式** — Works on desktop, tablet, and mobile / 支援桌面、平板與手機
+
+---
+
+## Tech Stack / 技術架構
+
+| Layer / 層級 | Technology / 技術 |
 |-------|-----------|
-| Framework | Next.js 16 (App Router) |
-| Language | TypeScript 5 |
+| Framework / 框架 | Next.js 16 (App Router) |
+| Language / 語言 | TypeScript 5 |
 | UI | Tailwind CSS 4 + shadcn/ui (Base UI) |
-| Charts | Recharts 3 |
-| Icons | Lucide React |
-| State | SWR + React hooks |
-| i18n | React Context + localStorage |
-| Theme | React Context + localStorage |
-| Testing | Vitest |
-| Compiler | React Compiler (babel-plugin-react-compiler) |
-| Data Sources | FRED API, DBnomics API, World Bank API |
+| Charts / 圖表 | Recharts 3 |
+| Icons / 圖示 | Lucide React |
+| State / 狀態 | SWR + React hooks |
+| i18n / 國際化 | React Context + localStorage |
+| Theme / 主題 | React Context + localStorage |
+| Testing / 測試 | Vitest |
+| Compiler / 編譯器 | React Compiler |
+| Data Sources / 資料來源 | FRED API, DBnomics API, World Bank API |
+| Container / 容器 | Docker + Docker Compose |
 
 ---
 
-## Project Structure
+## Project Structure / 專案結構
 
 ```
-economix/
-├── src/
-│   ├── app/
-│   │   ├── api/
-│   │   │   ├── fred/route.ts         # FRED API proxy
-│   │   │   ├── dbnomics/route.ts     # DBnomics API proxy
-│   │   │   ├── worldbank/route.ts    # World Bank API proxy
-│   │   │   └── exchange-rate/route.ts # Exchange rate API
-│   │   ├── layout.tsx                # Root layout (theme)
-│   │   ├── page.tsx                  # Entry point → Dashboard
-│   │   └── globals.css               # Tailwind + shadcn tokens
-│   ├── components/
-│   │   ├── Dashboard.tsx             # Main orchestrator (SWR, URL state, Promise.allSettled)
-│   │   ├── IndicatorSelector.tsx     # Searchable multi-select with loading/error UI
-│   │   ├── DatePickerRange.tsx       # Date range + quick presets
-│   │   ├── ValueModeSelector.tsx     # Value/Change/%/% Change toggle with tooltips
-│   │   ├── DataChart.tsx             # Recharts LineChart (responsive height, dual Y-axis)
-│   │   ├── StatsCards.tsx            # Stats display cards (theme-aware colors)
-│   │   ├── CorrelationMatrix.tsx     # Correlation matrix
-│   │   ├── LanguageSwitcher.tsx      # 繁中/EN toggle
-│   │   ├── ThemeToggle.tsx           # Dark/light theme toggle
-│   │   ├── ExportButton.tsx          # CSV export with proper escaping
-│   │   ├── USDConvertToggle.tsx      # USD conversion toggle
-│   │   ├── Providers.tsx             # Client-side context providers
-│   │   └── ui/                       # shadcn/ui primitives
-│   ├── lib/
-│   │   ├── indicators.ts             # Indicator definitions (52 indicators, nameKey for i18n)
-│   │   ├── i18n.ts                   # Translation dictionaries (en/zh-TW, 93 keys)
-│   │   ├── api-errors.ts             # Locale-aware API error messages
-│   │   ├── LocaleContext.tsx          # React Context for locale state
-│   │   ├── ThemeContext.tsx           # React Context for theme state
-│   │   ├── constants.ts              # Shared constants (CHART_COLORS)
-│   │   ├── correlation.ts            # Pearson correlation computation
-│   │   └── utils.ts                  # cn() helper
-│   ├── types/
-│   │   └── index.ts                  # TypeScript interfaces
-│   └── __tests__/
-│       ├── i18n.test.ts              # Translation key parity tests
-│       ├── indicators.test.ts        # Indicator structure validation
-│       ├── chart-data.test.ts        # processDataForChart unit tests
-│       ├── stats.test.ts             # calculateStats unit tests
-│       ├── api-errors.test.ts        # API error message tests
-│       └── url-state.test.ts         # URL state parsing tests
-├── vitest.config.ts                  # Vitest configuration
-├── .env.local                        # API keys (git-ignored)
-└── package.json
+src/
+├── app/
+│   ├── api/
+│   │   ├── fred/route.ts         # FRED API proxy
+│   │   ├── dbnomics/route.ts     # DBnomics API proxy
+│   │   ├── worldbank/route.ts    # World Bank API proxy
+│   │   └── exchange-rate/route.ts # Exchange rate API
+│   ├── layout.tsx                # Root layout (theme, font)
+│   ├── page.tsx                  # Entry point → Dashboard
+│   └── globals.css               # Tailwind + shadcn tokens
+├── components/
+│   ├── Dashboard.tsx             # Main orchestrator (SWR, URL state)
+│   ├── IndicatorSelector.tsx     # Searchable multi-select with i18n names
+│   ├── DatePickerRange.tsx       # Date range + quick presets
+│   ├── ValueModeSelector.tsx     # 5-mode segmented control with tooltips
+│   ├── DataChart.tsx             # Recharts LineChart (dual Y-axis, events, MA, forecast)
+│   ├── StatsCards.tsx            # Stats display cards
+│   ├── CorrelationMatrix.tsx     # Pearson correlation matrix
+│   ├── ScatterPlot.tsx           # X-Y scatter plot with r-value
+│   ├── DataTable.tsx             # Paginated data table
+│   ├── LanguageSwitcher.tsx      # 繁中/EN toggle
+│   ├── ThemeToggle.tsx           # Dark/light theme toggle
+│   ├── ExportButton.tsx          # CSV export
+│   └── Providers.tsx             # Client-side context providers
+├── lib/
+│   ├── indicators.ts             # Indicator definitions (100+ indicators)
+│   ├── i18n.ts                   # Translation dictionaries (en/zh-TW, 120+ keys)
+│   ├── correlation.ts            # Pearson correlation computation
+│   ├── forecast.ts               # Linear regression, moving average, forecast
+│   ├── historical-events.ts      # Historical economic events data
+│   ├── LocaleContext.tsx          # React Context for locale state
+│   ├── ThemeContext.tsx           # React Context for theme state
+│   └── constants.ts              # Shared constants (CHART_COLORS)
+├── types/
+│   └── index.ts                  # TypeScript interfaces
+└── __tests__/                    # Vitest test suite (68 tests)
 ```
 
 ---
 
-## Getting an API Key
+## Getting an API Key / 取得 API 金鑰
 
-### FRED (Federal Reserve Economic Data)
+### FRED (Federal Reserve Economic Data / 聯準會經濟資料)
 
-1. Go to https://fred.stlouisfed.org/docs/api/api_key.html
-2. Click "Request API Key"
-3. Fill out the form (free, instant approval)
-4. Copy your API key into `.env.local`
+1. Go to https://fred.stlouisfed.org/docs/api/api_key.html / 前往官方網站
+2. Click "Request API Key" / 點擊「Request API Key」
+3. Fill out the form (free, instant approval) / 填寫表單（免費，即時核准）
+4. Copy your API key into `.env.local` / 複製 API 金鑰至 `.env.local`
 
-### DBnomics
+### DBnomics / World Bank
 
-No API key required — the API is free and open.
-
-### World Bank
-
-No API key required — the API is free and open.
+No API key required — the API is free and open. / 無需 API 金鑰，API 免費且開放。
 
 ---
 
-## Environment Variables
+## Environment Variables / 環境變數
 
-Create `.env.local` in the project root:
+Create `.env.local` in the project root: / 在專案根目錄建立 `.env.local`：
 
 ```env
-# FRED API Key (required for FRED indicators)
+# FRED API Key (required for FRED indicators) / FRED API 金鑰（FRED 指標必要）
 FRED_API_KEY=your_api_key_here
 
-# DBnomics does not require an API key
-
-# World Bank does not require an API key
+# DBnomics does not require an API key / DBnomics 無需 API 金鑰
+# World Bank does not require an API key / World Bank 無需 API 金鑰
 ```
 
 ---
 
-## Available Indicators
-
-### United States (FRED) — 12 indicators
-
-| ID | Name | Series ID | Unit | Category |
-|----|------|-----------|------|----------|
-| `gdp` | GDP | GDP | Billions of $ | National Accounts |
-| `unemployment` | Unemployment Rate | UNRATE | % | Labor |
-| `cpi` | CPI | CPIAUCSL | Index | Prices |
-| `fed_funds_rate` | Federal Funds Rate | FEDFUNDS | % | Interest Rates |
-| `treasury_10y` | 10-Year Treasury | DGS10 | % | Interest Rates |
-| `sp500` | S&P 500 | SP500 | Index | Stock Market |
-| `industrial_production` | Industrial Production | INDPRO | Index | Production |
-| `housing_starts` | Housing Starts | HOUST | Thousands | Housing |
-| `consumer_sentiment` | Consumer Sentiment | UMCSENT | Index | Sentiment |
-| `pce` | PCE | PCE | Billions of $ | National Accounts |
-| `trade_balance` | Trade Balance | BOPGSTB | Millions of $ | Trade |
-| `retail_sales` | Retail Sales | RSAFS | Millions of $ | Consumption |
-
-### Euro Area (FRED) — 4 indicators
-
-| ID | Name | Series ID | Unit | Category |
-|----|------|-----------|------|----------|
-| `eu_gdp` | GDP | CLVMNACSCAB1GQEA19 | Millions of Chained 2010 Euros | National Accounts |
-| `eu_unemployment` | Unemployment Rate | LRHUTTTTEZM156S | % | Labor |
-| `eu_hicp` | HICP | CP0000EZ19M086NEST | Index 2025=100 | Prices |
-| `eu_ecb_rate` | ECB Main Refinancing Rate | ECBMRRFR | % | Interest Rates |
-
-### Japan (FRED) — 4 indicators
-
-| ID | Name | Series ID | Unit | Category |
-|----|------|-----------|------|----------|
-| `jp_gdp` | GDP | JPNRGDPEXP | Billions of Chained 2015 Yen | National Accounts |
-| `jp_unemployment` | Unemployment Rate | LRHUTTTTJPM156S | % | Labor |
-| `jp_cpi` | CPI | CPALTT01JPM659N | Index 2015=100 | Prices |
-| `jp_boj_rate` | BOJ Policy Rate | IRSTCI01JPM156N | % | Interest Rates |
-
-### China (FRED) — 3 indicators
-
-| ID | Name | Series ID | Unit | Category |
-|----|------|-----------|------|----------|
-| `cn_gdp` | GDP | MKTGDPCNA646NWDB | Current US Dollars | National Accounts |
-| `cn_cpi` | CPI | CPALTT01CNM659N | Index 2015=100 | Prices |
-| `cn_interest_rate` | Interest Rate | INTDSRCNM193N | % per Annum | Interest Rates |
-
-### United Kingdom (FRED) — 4 indicators
-
-| ID | Name | Series ID | Unit | Category |
-|----|------|-----------|------|----------|
-| `uk_gdp` | GDP | UKNGDP | Millions of Pounds | National Accounts |
-| `uk_unemployment` | Unemployment Rate | LRHUTTTTGBM156S | % | Labor |
-| `uk_cpi` | CPI | GBRCPIALLMINMEI | Index 2015=100 | Prices |
-| `uk_boe_rate` | BOE Bank Rate | BOERUKM | % per Annum | Interest Rates |
-
-### India (FRED) — 3 indicators
-
-| ID | Name | Series ID | Unit | Category |
-|----|------|-----------|------|----------|
-| `in_gdp` | GDP | MKTGDPIA646NWDB | Current US Dollars | National Accounts |
-| `in_cpi` | CPI | CPALTT01INM659N | Index 2015=100 | Prices |
-| `in_interest_rate` | Interest Rate | INTDSRINM193N | % per Annum | Interest Rates |
-
-### Brazil (FRED) — 3 indicators
-
-| ID | Name | Series ID | Unit | Category |
-|----|------|-----------|------|----------|
-| `br_gdp` | GDP | MKTGDPBRA646NWDB | Current US Dollars | National Accounts |
-| `br_cpi` | CPI | CPALTT01BRM659N | Index 2015=100 | Prices |
-| `br_interest_rate` | Interest Rate | INTDSRBRM193N | % per Annum | Interest Rates |
-
-### South Korea (FRED) — 3 indicators
-
-| ID | Name | Series ID | Unit | Category |
-|----|------|-----------|------|----------|
-| `kr_gdp` | GDP | MKTGDPKR646NWDB | Current US Dollars | National Accounts |
-| `kr_cpi` | CPI | CPALTT01KRM659N | Index 2015=100 | Prices |
-| `kr_interest_rate` | Interest Rate | INTDSRKR193N | % per Annum | Interest Rates |
-
-### Canada (FRED) — 4 indicators
-
-| ID | Name | Series ID | Unit | Category |
-|----|------|-----------|------|----------|
-| `ca_gdp` | GDP | NGDPRDPCNADGP | Current US Dollars | National Accounts |
-| `ca_unemployment` | Unemployment Rate | LRHUTTTTCAM156S | % | Labor |
-| `ca_cpi` | CPI | CPALTT01CAM659N | Index 2015=100 | Prices |
-| `ca_interest_rate` | Interest Rate | INTDSRCAM193N | % per Annum | Interest Rates |
-
-### Australia (FRED) — 4 indicators
-
-| ID | Name | Series ID | Unit | Category |
-|----|------|-----------|------|----------|
-| `au_gdp` | GDP | MKTGDPAU646NWDB | Current US Dollars | National Accounts |
-| `au_unemployment` | Unemployment Rate | LRHUTTTTAIM156S | % | Labor |
-| `au_cpi` | CPI | CPALTT01AIM659N | Index 2015=100 | Prices |
-| `au_interest_rate` | Interest Rate | INTDSRAIM193N | % per Annum | Interest Rates |
-
-### Recession Risk / Forecast (FRED) — 3 indicators
-
-| ID | Name | Series ID | Unit | Category |
-|----|------|-----------|------|----------|
-| `yield_curve_10y2y` | Yield Curve (10Y-2Y) | T10Y2Y | % | Recession Risk |
-| `yield_curve_10y3m` | Yield Curve (10Y-3M) | T10Y3M | % | Recession Risk |
-| `leading_index` | Leading Economic Index | USSLIND | Index 2016=100 | Recession Risk |
-
-### Global / Commodities (DBnomics) — 4 indicators
-
-| ID | Name | Dataset | Provider | Unit | Category |
-|----|------|---------|----------|------|----------|
-| `oil_wti` | WTI Crude Oil | WFIVERDB-5 | FRED | $/barrel | Commodities |
-| `gold_price` | Gold Price | GFDEGDQ188S | FRED | USD | Commodities |
-| `sugar_global` | Global Sugar | PSUGA_USD | IMF | USD/lb | Commodities |
-| `natural_gas` | Natural Gas | DHHNGSP | FRED | $/MMBTU | Commodities |
-
----
-
-## Architecture
+## Architecture / 系統架構
 
 ```
 ┌─────────────────────────────────────────────────────────┐
-│                     Browser (Client)                     │
-│                                                          │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  │
-│  │  Indicator    │  │   Date Range │  │  Value Mode  │  │
-│  │  Selector     │  │   Picker     │  │  Selector    │  │
-│  └──────┬───────┘  └──────┬───────┘  └──────┬───────┘  │
-│         │                  │                  │          │
-│         └──────────────────┼──────────────────┘          │
-│                            │                             │
-│                    ┌───────▼───────┐                     │
-│                    │   Dashboard   │  (SWR, URL state)   │
-│                    │   (React)     │                     │
-│                    └───────┬───────┘                     │
-│                            │                             │
-│              ┌─────────────┼─────────────┐               │
-│              │             │             │               │
-│        ┌─────▼─────┐ ┌────▼────┐ ┌─────▼─────┐         │
-│        │  Stats    │ │  Data   │ │  Loading  │         │
-│        │  Cards    │ │  Chart  │ │  / Error  │         │
-│        └───────────┘ └─────────┘ └───────────┘         │
-└──────────────────────────┬──────────────────────────────┘
-                           │ fetch()
-                           ▼
+│                  Browser (Client) / 瀏覽器               │
+│                                                         │
+│  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐  │
+│  │ Indicator│ │ Date     │ │ Value    │ │ Chart    │  │
+│  │ Selector │ │ Range    │ │ Mode     │ │ Toggles  │  │
+│  └────┬─────┘ └────┬─────┘ └────┬─────┘ └────┬─────┘  │
+│       └────────────┼────────────┼────────────┘         │
+│                    ▼                                   │
+│            ┌──────────────┐                            │
+│            │  Dashboard   │ (SWR, URL state)           │
+│            └──────┬───────┘                            │
+│       ┌───────────┼───────────┬───────────┐            │
+│       ▼           ▼           ▼           ▼            │
+│  ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐     │
+│  │  Stats  │ │  Data   │ │Correlat.│ │ Scatter │     │
+│  │  Cards  │ │  Chart  │ │ Matrix  │ │  Plot   │     │
+│  └─────────┘ └─────────┘ └─────────┘ └─────────┘     │
+│       │           │                                    │
+│       └───────────┼────────────────────────────────┐   │
+│                   ▼                                ▼   │
+│  ┌─────────────────────┐  ┌─────────────────────────┐ │
+│  │ Historical Events   │  │ Forecast (8 periods)    │ │
+│  │ Moving Average      │  │ Linear Regression       │ │
+│  └─────────────────────┘  └─────────────────────────┘ │
+└───────────────────────────┬────────────────────────────┘
+                            │ fetch()
+                            ▼
 ┌──────────────────────────────────────────────────────────┐
-│                  Next.js API Routes                       │
-│                                                           │
-│  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐  │
-│  │  /api/fred      │  │  /api/dbnomics  │  │  /api/worldbank │  │
-│  │  (proxy)        │  │  (proxy)        │  │  (proxy)        │  │
-│  └────────┬────────┘  └────────┬────────┘  └────────┬────────┘  │
-│           │                    │                     │           │
-└───────────┼────────────────────┼─────────────────────┼───────────┘
-            │                    │                     │
-            ▼                    ▼                     ▼
-    ┌───────────────┐    ┌───────────────┐    ┌───────────────┐
-    │  FRED API     │    │  DBnomics API │    │  World Bank   │
-    │  (external)   │    │  (external)   │    │  API (external)│
-    └───────────────┘    └───────────────┘    └───────────────┘
+│                Next.js API Routes / API 路由              │
+│  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐   │
+│  │ /api/fred│ │/api/dbnom│ │/api/world│ │/api/exch │   │
+│  └────┬─────┘ └────┬─────┘ └────┬─────┘ └────┬─────┘   │
+└───────┼────────────┼────────────┼────────────┼───────────┘
+        ▼            ▼            ▼            ▼
+  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐
+  │ FRED API │ │ DBnomics │ │World Bank│ │ Exchange │
+  │ (external│ │ (external│ │(external)│ │  Rate    │
+  └──────────┘ └──────────┘ └──────────┘ └──────────┘
 ```
-
-### Data Flow
-
-1. User selects indicators → `Dashboard` updates `selectedIds` state + syncs to URL
-2. `useSWR` triggers `fetchData()` when selection or date range changes
-3. `fetchData` uses `Promise.allSettled()` for parallel fetches — individual failures don't block others
-4. Per-indicator `loadingIds` and `fetchErrors` state for granular UI feedback
-5. API routes proxy requests to external APIs, hiding API keys from the client
-6. `useMemo` computes `chartData` and `stats` only when dependencies change
-7. `DataChart` and `StatsCards` render the processed data
 
 ---
 
-## API Routes
+## API Routes / API 路由
 
 ### `GET /api/fred`
 
-Proxies requests to the FRED API.
+**Query Parameters / 查詢參數:**
 
-**Query Parameters:**
-
-| Param | Type | Required | Description |
+| Param | Type | Required | Description / 說明 |
 |-------|------|----------|-------------|
-| `series_id` | string | Yes | FRED series ID (e.g., "GDP") |
-| `start_date` | string | No | ISO date (default: 2000-01-01) |
-| `end_date` | string | No | ISO date (default: today) |
-| `locale` | string | No | `"en"` or `"zh-TW"` for localized error messages (default: "en") |
-
-**Response:**
-
-```json
-{
-  "series_id": "GDP",
-  "observations": [
-    { "date": "2000-01-01", "value": 10252.3 },
-    { "date": "2000-04-01", "value": 10456.9 }
-  ]
-}
-```
+| `series_id` | string | Yes | FRED series ID (e.g., "GDP") / FRED 系列 ID |
+| `start_date` | string | No | ISO date (default: 2000-01-01) / ISO 日期 |
+| `end_date` | string | No | ISO date (default: today) / ISO 日期 |
+| `locale` | string | No | `"en"` or `"zh-TW"` / 語言設定 |
 
 ### `GET /api/dbnomics`
 
-Proxies requests to the DBnomics API.
-
-**Query Parameters:**
-
-| Param | Type | Required | Description |
+| Param | Type | Required | Description / 說明 |
 |-------|------|----------|-------------|
-| `dataset_code` | string | Yes | DBnomics dataset code |
-| `provider_code` | string | Yes | Provider code (e.g., "FRED", "IMF") |
-| `start_date` | string | No | ISO date |
-| `end_date` | string | No | ISO date |
-| `locale` | string | No | `"en"` or `"zh-TW"` for localized error messages (default: "en") |
-
-**Response:**
-
-```json
-{
-  "dataset_code": "WFIVERDB-5",
-  "provider_code": "FRED",
-  "observations": [
-    { "date": "2024-01-02", "value": 72.34 },
-    { "date": "2024-01-03", "value": 73.01 }
-  ]
-}
-```
+| `dataset_code` | string | Yes | DBnomics dataset code / DBnomics 資料集代碼 |
+| `provider_code` | string | Yes | Provider code (e.g., "FRED", "IMF") / 資料提供者代碼 |
+| `start_date` | string | No | ISO date / ISO 日期 |
+| `end_date` | string | No | ISO date / ISO 日期 |
 
 ### `GET /api/worldbank`
 
-Proxies requests to the World Bank API.
-
-**Query Parameters:**
-
-| Param | Type | Required | Description |
+| Param | Type | Required | Description / 說明 |
 |-------|------|----------|-------------|
-| `indicator` | string | Yes | World Bank indicator code (e.g., "NY.GDP.MKTP.CD") |
-| `country` | string | No | ISO2 country code (default: "US") |
-| `date` | string | No | Date range (e.g., "2020:2024") |
-| `locale` | string | No | `"en"` or `"zh-TW"` for localized error messages (default: "en") |
-
-**Response:**
-
-```json
-{
-  "indicator": "NY.GDP.MKTP.CD",
-  "observations": [
-    { "date": "2020-01-01", "value": 20894500000000 },
-    { "date": "2021-01-01", "value": 23315000000000 }
-  ]
-}
-```
+| `indicator` | string | Yes | World Bank indicator code (e.g., "NY.GDP.MKTP.CD") / World Bank 指標代碼 |
+| `country` | string | No | ISO2 country code (default: "US") / ISO2 國家代碼 |
+| `date` | string | No | Date range (e.g., "2020:2024") / 日期範圍 |
 
 ---
 
-## Components
+## Components / 元件
 
-### `Dashboard.tsx`
+### `Dashboard.tsx` — Main Orchestrator / 主控制器
 
-The main orchestrator. Manages state via SWR and URL persistence:
-- `selectedIds: string[]` — Which indicators are selected for left Y-axis (synced to URL)
-- `selectedIds2: string[]` — Which indicators are selected for right Y-axis (synced to URL)
-- `valueMode: ValueMode` — How to display values (synced to URL)
-- `dateRange: DateRange` — Start and end dates (synced to URL)
-- `allData: TimeSeriesData[]` — Fetched data via Promise.allSettled
-- `loadingIds: Set<string>` — Per-indicator loading state
-- `fetchErrors: Map<string, string>` — Per-indicator error messages
+Manages state via SWR and URL persistence: / 透過 SWR 管理狀態並同步至 URL：
 
-Exports `processDataForChart()` and `calculateStats()` for testing.
+- `selectedIds: string[]` — Left Y-axis indicators / 左側 Y 軸指標
+- `selectedIds2: string[]` — Right Y-axis indicators / 右側 Y 軸指標
+- `valueMode: ValueMode` — Display mode (synced to URL) / 顯示模式
+- `dateRange: DateRange` — Start and end dates / 起訖日期
+- `showEvents` — Historical events toggle / 歷史事件開關
+- `showMovingAverage` — Moving average toggle / 移動平均開關
+- `showForecast` — Forecast toggle / 預測開關
 
-### `IndicatorSelector.tsx`
+### `DataChart.tsx` — Time Series Chart / 時間序列圖表
 
-A popover with a searchable list of indicators grouped by country and global categories. Supports:
-- Multi-select with badge chips
-- Click badges to remove
-- Search by name, category, or description (searches both English and translated names)
-- Per-indicator loading spinner and error badge
-- Grouped layout: Country-specific → country → indicators, Global → category → indicators
-- Translated indicator names via `getIndicatorName()` helper
+Recharts LineChart with: / 使用 Recharts LineChart，支援：
 
-### `DatePickerRange.tsx`
+- Dual Y-axis (left = solid, right = dashed) / 雙 Y 軸（左=實線，右=虛線）
+- Historical event reference lines / 歷史事件參考線
+- Moving average overlay / 移動平均疊加
+- Forecast extrapolation / 預測外推
 
-Date range input with quick-select buttons:
-- Custom date inputs for start/end
-- Preset buttons: 1Y, 5Y, 10Y, All
+### `CorrelationMatrix.tsx` — Correlation Analysis / 相關性分析
 
-### `ValueModeSelector.tsx`
+Displays pairwise Pearson correlation coefficients between indicators. / 顯示指標間的皮爾森相關係數配對。
 
-A segmented control with 4 display modes. Each button has a tooltip describing what it shows:
+### `ScatterPlot.tsx` — Scatter Plot / 散佈圖
 
-| Mode | Description | Tooltip |
-|------|-------------|---------|
-| **Value** | Raw numerical value | "Raw numerical value" |
-| **Change** | Absolute change from previous data point | "Change from previous data point" |
-| **%** | Percentage change from previous data point | "Percentage change from previous data point" |
-| **% Change** | Cumulative net change from start of period | "Cumulative net change from start of period" |
+Plots two indicators against each other on X-Y axes. / 在 X-Y 軸上繪製兩個指標的散佈圖。
 
-### `DataChart.tsx`
+### `DataTable.tsx` — Data Table / 資料表格
 
-A Recharts `LineChart` wrapper with:
-- Responsive container (fills parent width)
-- Responsive height: `h-[300px] sm:h-[350px] lg:h-[400px]`
-- Custom dark/light themed tooltip
-- Color-coded lines per indicator (shared CHART_COLORS)
-- Grid lines matching the theme
-- **Dual Y-axis support** — Compare indicators with different scales (left axis = solid lines, right axis = dashed lines)
-
-### `StatsCards.tsx`
-
-A grid of stat cards showing for each indicator:
-- Current value with unit
-- Change % from previous period
-- Trend arrow (up/down/neutral)
-
-### `LanguageSwitcher.tsx`
-
-A toggle button in the header that switches between 繁中 and English. Locale is persisted to localStorage.
-
-### `ThemeToggle.tsx`
-
-A toggle button that switches between dark and light themes. Theme is persisted to localStorage and applied via CSS class on `<html>`.
-
-### `ExportButton.tsx`
-
-A button that exports the current chart data to CSV format. Properly escapes values containing commas or quotes. Downloads as `economix-YYYY-MM-DD.csv`.
-
-### `CorrelationMatrix.tsx`
-
-Displays pairwise Pearson correlation coefficients between all selected indicators. Shows:
-- Correlation coefficient (r value) for each pair
-- Relationship type (strong/moderate/weak positive/negative)
-- Color-coded cards (green for positive, red for negative correlations)
-
-### `ScatterPlot.tsx`
-
-Plots the first two selected indicators against each other on an X-Y scatter plot. Includes:
-- X-axis = first indicator, Y-axis = second indicator
-- Correlation coefficient (r) shown in the title
-- Responsive container with tooltips
-
-### `DataTable.tsx`
-
-Paginated tabular view of the raw chart data. Features:
-- Most recent dates shown first
-- Color-coded column headers matching chart line colors
-- 20 rows per page with Previous/Next navigation
+Paginated tabular view (20 rows/page) with color-coded columns. / 分頁表格檢視（每頁 20 列），欄位顏色標示。
 
 ---
 
-## Chart Enhancement Toggles
+## Value Modes / 數值模式
 
-Three toggle buttons appear above the chart when data is loaded:
-
-| Toggle | Effect |
-|--------|--------|
-| **Events** | Shows vertical dashed lines for historical events (recessions, crises, policy changes) |
-| **Trend** | Adds a 3-period moving average line for each indicator (dashed, semi-transparent) |
-| **Forecast** | Extrapolates each indicator 8 periods into the future using linear regression (dashed line) |
-
----
-
-## Value Modes
-
-| Mode | Formula | Description |
+| Mode / 模式 | Formula / 公式 | Description / 說明 |
 |------|---------|-------------|
-| **Value** | raw value | Default — shows the actual numerical value |
-| **Change** | `value[i] - value[i-1]` | Absolute change from previous data point |
-| **%** | `((value[i] - value[i-1]) / value[i-1]) * 100` | Percentage change from previous |
-| **% Change** | `((value[i] - value[0]) / value[0]) * 100` | Cumulative change from period start |
-| **YoY** | `((value[i] - value[1yr_ago]) / value[1yr_ago]) * 100` | Year-over-year growth rate |
+| **Value / 數值** | `point.value` | Raw value / 原始值 |
+| **Change / 變動** | `value[i] - value[i-1]` | Absolute change / 絕對變動 |
+| **%** | `((v[i] - v[i-1]) / v[i-1]) * 100` | Period-over-period % / 期間百分比變動 |
+| **% Change / 累計%** | `((v[i] - v[0]) / v[0]) * 100` | Cumulative from start / 自起始累計百分比 |
+| **YoY / 年增率** | `((v[i] - v[1yr]) / v[1yr]) * 100` | Year-over-year / 年增率 |
 
 ---
 
-## Internationalization
+## Chart Enhancements / 圖表增強
 
-The app supports two locales:
-- **English** (`en`) — default
-- **繁體中文** (`zh-TW`)
-
-### How it works
-
-- `src/lib/i18n.ts` — Translation dictionary with 93 keys (including indicator names like `gdp`, `unemployment`, `cpi`, etc.)
-- `src/lib/LocaleContext.tsx` — React Context providing `locale`, `t()`, `setLocale()`
-- `src/components/LanguageSwitcher.tsx` — Toggle button in header
-- Locale is persisted to `localStorage("economix-locale")`
-
-### Adding a new locale
-
-1. Add locale type to `Locale` in `src/lib/i18n.ts`
-2. Add translation entries for all keys in `translations`
-3. Update `LocaleContext.tsx` to accept the new locale in `getInitialLocale()`
-
-### Adding a new translation key
-
-1. Add the key to `TranslationKey` type in `src/lib/i18n.ts`
-2. Add translations for all locales in the `translations` object
-3. Use `t("yourKey")` in components via `useLocale()`
+| Toggle / 開關 | Effect / 效果 |
+|--------|--------|
+| **Events / 事件** | Vertical dashed lines for historical events (recessions, crises, policy changes) / 歷史事件垂直虛線（衰退、危機、政策變動） |
+| **Trend / 趨勢** | 3-period moving average line per indicator (dashed, semi-transparent) / 每個指標的 3 期移動平均線（虛線，半透明） |
+| **Forecast / 預測** | Linear regression extrapolation 8 periods ahead (dashed line) / 線性回歸外推未來 8 期（虛線） |
 
 ---
 
-## Adding New Indicators
+## Adding New Indicators / 新增指標
 
-### FRED Indicator
+### FRED Indicator / FRED 指標
 
-1. Find the series ID at https://fred.stlouisfed.org/
-2. Add an entry to `src/lib/indicators.ts`:
+Edit `src/lib/indicators.ts`:
 
 ```typescript
 {
@@ -591,14 +328,11 @@ The app supports two locales:
   category: "nationalAccounts",
   description: "Description text",
   categoryType: "country",
-  country: "US",  // or "EuroArea", "Japan", "China", "UK", "India", "Brazil", "SouthKorea", "Canada", "Australia"
+  country: "US",
 }
 ```
 
-### DBnomics Indicator
-
-1. Find the dataset at https://db.nomics.world/
-2. Add an entry to `src/lib/indicators.ts`:
+### DBnomics Indicator / DBnomics 指標
 
 ```typescript
 {
@@ -614,18 +348,15 @@ The app supports two locales:
 }
 ```
 
-### World Bank Indicator
-
-1. Find the indicator at https://data.worldbank.org/
-2. Add an entry to `src/lib/indicators.ts`:
+### World Bank Indicator / World Bank 指標
 
 ```typescript
 {
   id: "wb_indicator",
   name: "World Bank Indicator",
   source: "worldbank",
-  seriesId: "INDICATOR_CODE",  // e.g., "NY.GDP.MKTP.CD"
-  countryCode: "US",           // ISO2 country code
+  seriesId: "INDICATOR_CODE",
+  countryCode: "US",
   unit: "Units",
   category: "nationalAccounts",
   description: "Description text",
@@ -634,69 +365,50 @@ The app supports two locales:
 }
 ```
 
-No other code changes needed — the dashboard auto-discovers indicators from the array.
-
 ---
 
-## Testing
-
-Tests use [Vitest](https://vitest.dev/) and cover core logic:
+## Testing / 測試
 
 ```bash
-# Run all tests
-npm test
-
-# Run tests in watch mode
-npx vitest
+npm test           # Run all tests / 執行所有測試
+npx vitest         # Watch mode / 監聽模式
 ```
 
-### Test files
+### Test Files / 測試檔案
 
-| File | Coverage |
+| File / 檔案 | Coverage / 覆蓋範圍 |
 |------|----------|
-| `src/__tests__/i18n.test.ts` | Translation key parity, `t()` correctness, new countries |
-| `src/__tests__/indicators.test.ts` | Indicator structure, 10 countries, recession risk, 40+ total |
-| `src/__tests__/chart-data.test.ts` | `processDataForChart()` — merge, sort, value modes |
-| `src/__tests__/stats.test.ts` | `calculateStats()` — change, percentages, min/max |
-| `src/__tests__/api-errors.test.ts` | API error messages, locale switching |
-| `src/__tests__/url-state.test.ts` | `getScaleFactor()`, URL state parsing |
+| `chart-data.test.ts` | `processDataForChart()` — all 5 value modes / 全部 5 種數值模式 |
+| `correlation.test.ts` | `pearsonCorrelation()`, `interpretCorrelation()`, `computeCorrelationMatrix()` |
+| `forecast.test.ts` | `linearRegression()`, `movingAverage()`, `forecast()` |
+| `i18n.test.ts` | Translation key parity / 翻譯鍵一致性 |
+| `indicators.test.ts` | Indicator structure / 指標結構 |
+| `stats.test.ts` | `calculateStats()` |
+| `api-errors.test.ts` | API error messages / API 錯誤訊息 |
+| `url-state.test.ts` | URL state parsing / URL 狀態解析 |
 
 ---
 
-## Deployment
+## Deployment / 部署
 
-### Vercel (Recommended)
+### Vercel (Recommended / 推薦)
 
 ```bash
-# Install Vercel CLI
 npm i -g vercel
-
-# Deploy
 vercel
-
-# Set environment variable
 vercel env add FRED_API_KEY
 ```
 
 ### Docker
 
-```dockerfile
-FROM node:20-alpine AS builder
-WORKDIR /app
-COPY package*.json ./
-RUN npm ci
-COPY . .
-RUN npm run build
-
-FROM node:20-alpine AS runner
-WORKDIR /app
-COPY --from=builder /app/.next/standalone ./
-COPY --from=builder /app/.next/static ./.next/static
-EXPOSE 3000
-CMD ["node", "server.js"]
+```bash
+docker compose up --build
 ```
 
-### Self-Hosted
+Uses multi-stage build with `output: "standalone"` for minimal image size.
+使用多階段建構搭配 `output: "standalone"` 以最小化映像檔大小。
+
+### Self-Hosted / 自架
 
 ```bash
 npm run build
@@ -705,6 +417,6 @@ npm run start
 
 ---
 
-## License
+## License / 授權條款
 
 MIT
