@@ -414,7 +414,8 @@ Uses multi-stage build with `output: "standalone"` for minimal image size.
 npm run build
 npm run start
 ```
-
+![screen-cap1](screen-cap1)
+![screen-cap2](screen-cap2)
 ---
 
 ## License / 授權條款
